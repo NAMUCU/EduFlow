@@ -1,0 +1,173 @@
+{
+  "notifications": [
+    {
+      "id": "notif-001",
+      "type": "assignment",
+      "title": "새로운 과제가 등록되었습니다",
+      "message": "수학 - 이차방정식 연습문제가 등록되었습니다. 1월 25일까지 제출해주세요.",
+      "userId": "user-001",
+      "senderId": "teacher-001",
+      "senderName": "김선생님",
+      "isRead": false,
+      "priority": "high",
+      "link": "/dashboard/assignments/assign-001",
+      "metadata": {
+        "assignmentId": "assign-001",
+        "assignmentTitle": "이차방정식 연습문제",
+        "dueDate": "2026-01-25"
+      },
+      "createdAt": "2026-01-20T09:00:00Z"
+    },
+    {
+      "id": "notif-002",
+      "type": "grade",
+      "title": "성적이 등록되었습니다",
+      "message": "영어 단어 테스트 성적이 등록되었습니다. 92점을 획득했습니다.",
+      "userId": "user-001",
+      "senderId": "teacher-002",
+      "senderName": "박선생님",
+      "isRead": false,
+      "priority": "medium",
+      "link": "/dashboard/grades",
+      "metadata": {
+        "subject": "영어",
+        "score": 92,
+        "maxScore": 100
+      },
+      "createdAt": "2026-01-19T15:30:00Z"
+    },
+    {
+      "id": "notif-003",
+      "type": "attendance",
+      "title": "출결 알림",
+      "message": "1월 18일 수업에 지각 처리되었습니다.",
+      "userId": "user-001",
+      "senderId": "admin-001",
+      "senderName": "학원관리자",
+      "isRead": true,
+      "priority": "medium",
+      "link": "/dashboard/attendance",
+      "metadata": {
+        "attendanceDate": "2026-01-18",
+        "attendanceStatus": "late"
+      },
+      "createdAt": "2026-01-18T14:00:00Z",
+      "readAt": "2026-01-18T18:00:00Z"
+    },
+    {
+      "id": "notif-004",
+      "type": "notice",
+      "title": "설 연휴 휴원 안내",
+      "message": "1월 28일 ~ 1월 30일은 설 연휴로 휴원합니다. 즐거운 명절 보내세요!",
+      "userId": "user-001",
+      "senderId": "admin-001",
+      "senderName": "학원관리자",
+      "isRead": false,
+      "priority": "high",
+      "link": "/dashboard/notices/notice-001",
+      "metadata": {
+        "noticeId": "notice-001",
+        "noticeCategory": "휴원안내"
+      },
+      "createdAt": "2026-01-17T10:00:00Z"
+    },
+    {
+      "id": "notif-005",
+      "type": "system",
+      "title": "비밀번호 변경 권장",
+      "message": "보안을 위해 90일마다 비밀번호를 변경하는 것을 권장합니다.",
+      "userId": "user-001",
+      "isRead": true,
+      "priority": "low",
+      "link": "/dashboard/settings/security",
+      "metadata": {
+        "systemAction": "password_change_reminder"
+      },
+      "createdAt": "2026-01-15T08:00:00Z",
+      "readAt": "2026-01-15T12:00:00Z"
+    },
+    {
+      "id": "notif-006",
+      "type": "assignment",
+      "title": "과제 제출 기한 임박",
+      "message": "국어 - 독서감상문 제출 기한이 내일입니다. 아직 제출하지 않았습니다.",
+      "userId": "user-001",
+      "senderId": "teacher-003",
+      "senderName": "이선생님",
+      "isRead": false,
+      "priority": "urgent",
+      "link": "/dashboard/assignments/assign-002",
+      "metadata": {
+        "assignmentId": "assign-002",
+        "assignmentTitle": "독서감상문",
+        "dueDate": "2026-01-21"
+      },
+      "createdAt": "2026-01-20T08:00:00Z"
+    },
+    {
+      "id": "notif-007",
+      "type": "grade",
+      "title": "월간 성적표가 발행되었습니다",
+      "message": "2025년 12월 월간 성적표가 발행되었습니다. 확인해주세요.",
+      "userId": "user-001",
+      "senderId": "admin-001",
+      "senderName": "학원관리자",
+      "isRead": true,
+      "priority": "medium",
+      "link": "/dashboard/grades/monthly",
+      "metadata": {
+        "subject": "종합"
+      },
+      "createdAt": "2026-01-05T09:00:00Z",
+      "readAt": "2026-01-06T10:00:00Z"
+    },
+    {
+      "id": "notif-008",
+      "type": "attendance",
+      "title": "출석 확인",
+      "message": "오늘 수업에 정상 출석하셨습니다.",
+      "userId": "user-001",
+      "senderId": "admin-001",
+      "senderName": "학원관리자",
+      "isRead": false,
+      "priority": "low",
+      "link": "/dashboard/attendance",
+      "metadata": {
+        "attendanceDate": "2026-01-20",
+        "attendanceStatus": "present"
+      },
+      "createdAt": "2026-01-20T14:30:00Z"
+    },
+    {
+      "id": "notif-009",
+      "type": "notice",
+      "title": "2월 수업 시간표 변경 안내",
+      "message": "2월부터 수학 수업 시간이 화요일 4시에서 5시로 변경됩니다.",
+      "userId": "user-001",
+      "senderId": "admin-001",
+      "senderName": "학원관리자",
+      "isRead": false,
+      "priority": "medium",
+      "link": "/dashboard/schedule",
+      "metadata": {
+        "noticeId": "notice-002",
+        "noticeCategory": "시간표"
+      },
+      "createdAt": "2026-01-19T11:00:00Z"
+    },
+    {
+      "id": "notif-010",
+      "type": "system",
+      "title": "앱 업데이트 알림",
+      "message": "EduFlow가 새로운 기능으로 업데이트되었습니다. 새로운 알림 기능을 확인해보세요!",
+      "userId": "user-001",
+      "isRead": false,
+      "priority": "low",
+      "link": "/dashboard/changelog",
+      "metadata": {
+        "systemAction": "app_update"
+      },
+      "createdAt": "2026-01-20T06:00:00Z"
+    }
+  ]
+}

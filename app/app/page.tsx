@@ -1,6 +1,21 @@
-import { redirect } from 'next/navigation'
+import LandingNav from '@/components/LandingNav';
+import HeroSection from '@/components/landing/HeroSection';
+import FeaturesSection from '@/components/landing/FeaturesSection';
+import PricingSection from '@/components/landing/PricingSection';
+import TestimonialsSection from '@/components/landing/TestimonialsSection';
+import FaqSection from '@/components/landing/FaqSection';
+import Footer from '@/components/landing/Footer';
 
 export default function Home() {
-  // 나중에 인증 체크 후 리다이렉트 로직 추가
-  redirect('/login')
+  return (
+    <main className="min-h-screen">
+      <LandingNav />
+      <HeroSection />
+      <FeaturesSection />
+      <PricingSection />
+      <TestimonialsSection />
+      <FaqSection />
+      <Footer />
+    </main>
+  );
 }

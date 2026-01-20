@@ -1,0 +1,463 @@
+{
+  "students": [
+    {
+      "id": "STU001",
+      "name": "김민준",
+      "email": "minjun.kim@student.com",
+      "phone": "010-1234-5678",
+      "grade": "중2",
+      "school": "분당중학교",
+      "className": "A반",
+      "subjects": ["수학", "영어"],
+      "status": "우수",
+      "averageScore": 92,
+      "enrolledAt": "2025-03-01",
+      "memo": "수학 심화반 이동 예정",
+      "parent": {
+        "name": "김영희",
+        "phone": "010-8765-4321",
+        "email": "yhkim@email.com",
+        "relationship": "모"
+      }
+    },
+    {
+      "id": "STU002",
+      "name": "이서연",
+      "email": "seoyeon.lee@student.com",
+      "phone": "010-2345-6789",
+      "grade": "중3",
+      "school": "정자중학교",
+      "className": "심화반",
+      "subjects": ["수학", "영어", "과학"],
+      "status": "우수",
+      "averageScore": 95,
+      "enrolledAt": "2024-09-01",
+      "memo": "특목고 준비 중",
+      "parent": {
+        "name": "이철수",
+        "phone": "010-9876-5432",
+        "email": "cslee@email.com",
+        "relationship": "부"
+      }
+    },
+    {
+      "id": "STU003",
+      "name": "박지호",
+      "email": "jiho.park@student.com",
+      "phone": "010-3456-7890",
+      "grade": "중2",
+      "school": "내정중학교",
+      "className": "B반",
+      "subjects": ["수학"],
+      "status": "주의",
+      "averageScore": 68,
+      "enrolledAt": "2025-01-15",
+      "memo": "기초 보충 필요",
+      "parent": {
+        "name": "박미영",
+        "phone": "010-8765-1234",
+        "email": "mypark@email.com",
+        "relationship": "모"
+      }
+    },
+    {
+      "id": "STU004",
+      "name": "최수아",
+      "email": "sua.choi@student.com",
+      "phone": "010-4567-8901",
+      "grade": "중1",
+      "school": "분당중학교",
+      "className": "A반",
+      "subjects": ["수학", "영어"],
+      "status": "정상",
+      "averageScore": 82,
+      "enrolledAt": "2025-03-05",
+      "memo": "",
+      "parent": {
+        "name": "최정민",
+        "phone": "010-7654-3210",
+        "email": "jmchoi@email.com",
+        "relationship": "부"
+      }
+    },
+    {
+      "id": "STU005",
+      "name": "정현우",
+      "email": "hyunwoo.jung@student.com",
+      "phone": "010-5678-9012",
+      "grade": "중3",
+      "school": "수내중학교",
+      "className": "심화반",
+      "subjects": ["수학", "과학"],
+      "status": "우수",
+      "averageScore": 97,
+      "enrolledAt": "2024-06-01",
+      "memo": "과학고 준비",
+      "parent": {
+        "name": "정은주",
+        "phone": "010-6543-2109",
+        "email": "ejjung@email.com",
+        "relationship": "모"
+      }
+    },
+    {
+      "id": "STU006",
+      "name": "강지민",
+      "email": "jimin.kang@student.com",
+      "phone": "010-6789-0123",
+      "grade": "중2",
+      "school": "정자중학교",
+      "className": "B반",
+      "subjects": ["수학"],
+      "status": "주의",
+      "averageScore": 65,
+      "enrolledAt": "2025-02-01",
+      "memo": "집중력 향상 필요",
+      "parent": {
+        "name": "강민호",
+        "phone": "010-5432-1098",
+        "email": "mhkang@email.com",
+        "relationship": "부"
+      }
+    },
+    {
+      "id": "STU007",
+      "name": "윤하은",
+      "email": "haeun.yoon@student.com",
+      "phone": "010-7890-1234",
+      "grade": "고1",
+      "school": "분당고등학교",
+      "className": "C반",
+      "subjects": ["수학", "영어"],
+      "status": "정상",
+      "averageScore": 78,
+      "enrolledAt": "2025-03-10",
+      "memo": "",
+      "parent": {
+        "name": "윤성호",
+        "phone": "010-4321-0987",
+        "email": "shyoon@email.com",
+        "relationship": "부"
+      }
+    },
+    {
+      "id": "STU008",
+      "name": "임도현",
+      "email": "dohyun.lim@student.com",
+      "phone": "010-8901-2345",
+      "grade": "고2",
+      "school": "낙생고등학교",
+      "className": "심화반",
+      "subjects": ["수학", "과학"],
+      "status": "우수",
+      "averageScore": 91,
+      "enrolledAt": "2024-03-01",
+      "memo": "이과 지원 예정",
+      "parent": {
+        "name": "임지현",
+        "phone": "010-3210-9876",
+        "email": "jhlim@email.com",
+        "relationship": "모"
+      }
+    },
+    {
+      "id": "STU009",
+      "name": "한소희",
+      "email": "sohee.han@student.com",
+      "phone": "010-9012-3456",
+      "grade": "중1",
+      "school": "백현중학교",
+      "className": "기초반",
+      "subjects": ["수학"],
+      "status": "신규",
+      "averageScore": null,
+      "enrolledAt": "2026-01-10",
+      "memo": "첫 상담 예정",
+      "parent": {
+        "name": "한승우",
+        "phone": "010-2109-8765",
+        "email": "swhan@email.com",
+        "relationship": "부"
+      }
+    },
+    {
+      "id": "STU010",
+      "name": "오지환",
+      "email": "jihwan.oh@student.com",
+      "phone": "010-0123-4567",
+      "grade": "중3",
+      "school": "이매중학교",
+      "className": "A반",
+      "subjects": ["수학", "영어", "국어"],
+      "status": "정상",
+      "averageScore": 85,
+      "enrolledAt": "2024-09-15",
+      "memo": "",
+      "parent": {
+        "name": "오혜진",
+        "phone": "010-1098-7654",
+        "email": "hjoh@email.com",
+        "relationship": "모"
+      }
+    },
+    {
+      "id": "STU011",
+      "name": "서준혁",
+      "email": "junhyuk.seo@student.com",
+      "phone": "010-1111-2222",
+      "grade": "고1",
+      "school": "서현고등학교",
+      "className": "B반",
+      "subjects": ["수학"],
+      "status": "정상",
+      "averageScore": 80,
+      "enrolledAt": "2025-03-01",
+      "memo": "",
+      "parent": {
+        "name": "서민석",
+        "phone": "010-2222-3333",
+        "email": "msseo@email.com",
+        "relationship": "부"
+      }
+    },
+    {
+      "id": "STU012",
+      "name": "배수진",
+      "email": "sujin.bae@student.com",
+      "phone": "010-3333-4444",
+      "grade": "중2",
+      "school": "야탑중학교",
+      "className": "A반",
+      "subjects": ["수학", "영어"],
+      "status": "우수",
+      "averageScore": 93,
+      "enrolledAt": "2024-06-01",
+      "memo": "영어 추가 수강 희망",
+      "parent": {
+        "name": "배정호",
+        "phone": "010-4444-5555",
+        "email": "jhbae@email.com",
+        "relationship": "부"
+      }
+    },
+    {
+      "id": "STU013",
+      "name": "황예은",
+      "email": "yeeun.hwang@student.com",
+      "phone": "010-5555-6666",
+      "grade": "고3",
+      "school": "분당고등학교",
+      "className": "특목반",
+      "subjects": ["수학", "과학"],
+      "status": "우수",
+      "averageScore": 96,
+      "enrolledAt": "2023-03-01",
+      "memo": "의대 지원 예정",
+      "parent": {
+        "name": "황미선",
+        "phone": "010-6666-7777",
+        "email": "mshwang@email.com",
+        "relationship": "모"
+      }
+    },
+    {
+      "id": "STU014",
+      "name": "송태민",
+      "email": "taemin.song@student.com",
+      "phone": "010-7777-8888",
+      "grade": "중1",
+      "school": "분당중학교",
+      "className": "기초반",
+      "subjects": ["수학"],
+      "status": "주의",
+      "averageScore": 62,
+      "enrolledAt": "2025-09-01",
+      "memo": "기초 개념 재학습 중",
+      "parent": {
+        "name": "송지영",
+        "phone": "010-8888-9999",
+        "email": "jysong@email.com",
+        "relationship": "모"
+      }
+    },
+    {
+      "id": "STU015",
+      "name": "조은서",
+      "email": "eunseo.jo@student.com",
+      "phone": "010-9999-0000",
+      "grade": "고2",
+      "school": "낙생고등학교",
+      "className": "A반",
+      "subjects": ["수학", "영어"],
+      "status": "정상",
+      "averageScore": 84,
+      "enrolledAt": "2024-03-01",
+      "memo": "",
+      "parent": {
+        "name": "조현수",
+        "phone": "010-0000-1111",
+        "email": "hsjo@email.com",
+        "relationship": "부"
+      }
+    },
+    {
+      "id": "STU016",
+      "name": "신우진",
+      "email": "woojin.shin@student.com",
+      "phone": "010-1212-3434",
+      "grade": "중2",
+      "school": "수내중학교",
+      "className": "B반",
+      "subjects": ["수학", "과학"],
+      "status": "정상",
+      "averageScore": 79,
+      "enrolledAt": "2024-12-01",
+      "memo": "",
+      "parent": {
+        "name": "신현정",
+        "phone": "010-3434-5656",
+        "email": "hjshin@email.com",
+        "relationship": "모"
+      }
+    },
+    {
+      "id": "STU017",
+      "name": "류시현",
+      "email": "sihyun.ryu@student.com",
+      "phone": "010-5656-7878",
+      "grade": "고1",
+      "school": "서현고등학교",
+      "className": "심화반",
+      "subjects": ["수학", "영어", "국어"],
+      "status": "우수",
+      "averageScore": 90,
+      "enrolledAt": "2025-03-01",
+      "memo": "전과목 수강",
+      "parent": {
+        "name": "류정훈",
+        "phone": "010-7878-9090",
+        "email": "jhryu@email.com",
+        "relationship": "부"
+      }
+    },
+    {
+      "id": "STU018",
+      "name": "문채원",
+      "email": "chaewon.moon@student.com",
+      "phone": "010-9090-1212",
+      "grade": "중3",
+      "school": "정자중학교",
+      "className": "A반",
+      "subjects": ["수학", "영어"],
+      "status": "정상",
+      "averageScore": 86,
+      "enrolledAt": "2024-06-01",
+      "memo": "",
+      "parent": {
+        "name": "문상현",
+        "phone": "010-1212-3434",
+        "email": "shmoon@email.com",
+        "relationship": "부"
+      }
+    },
+    {
+      "id": "STU019",
+      "name": "양지우",
+      "email": "jiwoo.yang@student.com",
+      "phone": "010-2323-4545",
+      "grade": "초6",
+      "school": "분당초등학교",
+      "className": "C반",
+      "subjects": ["수학"],
+      "status": "신규",
+      "averageScore": null,
+      "enrolledAt": "2026-01-15",
+      "memo": "중학교 선행 시작",
+      "parent": {
+        "name": "양승민",
+        "phone": "010-4545-6767",
+        "email": "smyang@email.com",
+        "relationship": "부"
+      }
+    },
+    {
+      "id": "STU020",
+      "name": "권민재",
+      "email": "minjae.kwon@student.com",
+      "phone": "010-6767-8989",
+      "grade": "고3",
+      "school": "분당고등학교",
+      "className": "특목반",
+      "subjects": ["수학", "과학"],
+      "status": "우수",
+      "averageScore": 94,
+      "enrolledAt": "2023-06-01",
+      "memo": "공대 지원 예정",
+      "parent": {
+        "name": "권혜정",
+        "phone": "010-8989-0101",
+        "email": "hjkwon@email.com",
+        "relationship": "모"
+      }
+    }
+  ],
+  "grades": {
+    "STU001": [
+      { "subject": "수학", "score": 92, "maxScore": 100, "date": "2025-12-15", "examType": "월말평가" },
+      { "subject": "수학", "score": 88, "maxScore": 100, "date": "2025-11-15", "examType": "월말평가" },
+      { "subject": "영어", "score": 90, "maxScore": 100, "date": "2025-12-15", "examType": "월말평가" }
+    ],
+    "STU002": [
+      { "subject": "수학", "score": 98, "maxScore": 100, "date": "2025-12-15", "examType": "월말평가" },
+      { "subject": "영어", "score": 95, "maxScore": 100, "date": "2025-12-15", "examType": "월말평가" },
+      { "subject": "과학", "score": 92, "maxScore": 100, "date": "2025-12-15", "examType": "월말평가" }
+    ],
+    "STU003": [
+      { "subject": "수학", "score": 65, "maxScore": 100, "date": "2025-12-15", "examType": "월말평가" },
+      { "subject": "수학", "score": 70, "maxScore": 100, "date": "2025-11-15", "examType": "월말평가" }
+    ],
+    "STU005": [
+      { "subject": "수학", "score": 100, "maxScore": 100, "date": "2025-12-15", "examType": "월말평가" },
+      { "subject": "과학", "score": 95, "maxScore": 100, "date": "2025-12-15", "examType": "월말평가" }
+    ]
+  },
+  "attendance": {
+    "STU001": [
+      { "date": "2026-01-20", "status": "present", "checkInTime": "14:00", "checkOutTime": "17:00" },
+      { "date": "2026-01-18", "status": "present", "checkInTime": "14:05", "checkOutTime": "17:00" },
+      { "date": "2026-01-15", "status": "late", "checkInTime": "14:30", "checkOutTime": "17:00", "note": "교통체증" }
+    ],
+    "STU002": [
+      { "date": "2026-01-20", "status": "present", "checkInTime": "13:55", "checkOutTime": "17:00" },
+      { "date": "2026-01-18", "status": "present", "checkInTime": "14:00", "checkOutTime": "17:00" }
+    ],
+    "STU003": [
+      { "date": "2026-01-20", "status": "absent", "note": "병결" },
+      { "date": "2026-01-18", "status": "present", "checkInTime": "14:00", "checkOutTime": "17:00" }
+    ]
+  },
+  "consultations": {
+    "STU001": [
+      {
+        "id": "CONS001",
+        "date": "2025-12-20T15:00:00",
+        "type": "in_person",
+        "duration": 30,
+        "topic": "진도 상담",
+        "notes": "현재 진도 양호, 심화반 이동 권장",
+        "status": "completed"
+      }
+    ],
+    "STU003": [
+      {
+        "id": "CONS002",
+        "date": "2026-01-25T16:00:00",
+        "type": "phone",
+        "duration": 20,
+        "topic": "학습 상담",
+        "notes": "",
+        "status": "scheduled"
+      }
+    ]
+  }
+}

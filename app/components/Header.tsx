@@ -1,13 +1,15 @@
 'use client'
 
-import { Bell, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
+import NotificationBell from './NotificationBell'
 
 interface HeaderProps {
   title: string
   subtitle?: string
+  userId?: string
 }
 
-export default function Header({ title, subtitle }: HeaderProps) {
+export default function Header({ title, subtitle, userId = 'user-001' }: HeaderProps) {
   return (
     <header className="bg-white border-b border-gray-200 px-8 py-4">
       <div className="flex items-center justify-between">
@@ -30,10 +32,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
           </div>
 
           {/* 알림 */}
-          <button className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <Bell className="w-5 h-5 text-gray-600" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-          </button>
+          <NotificationBell userId={userId} />
         </div>
       </div>
     </header>

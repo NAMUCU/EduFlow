@@ -53,3 +53,169 @@ body {
     @apply block text-sm font-medium text-gray-700 mb-1;
   }
 }
+
+/* 랜딩 페이지 애니메이션 */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(2deg);
+  }
+}
+
+@keyframes float-delayed {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-30px) rotate(-2deg);
+  }
+}
+
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 0.15;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.25;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scroll-indicator {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float-delayed 8s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 4s ease-in-out infinite;
+}
+
+.animate-fade-in {
+  animation: fade-in 1s ease-out forwards;
+}
+
+.animate-fade-in-delayed {
+  animation: fade-in 1s ease-out 0.8s forwards;
+  opacity: 0;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.8s ease-out forwards;
+}
+
+.animate-slide-up-delayed {
+  animation: slide-up 0.8s ease-out 0.3s forwards;
+  opacity: 0;
+}
+
+.animate-slide-up-more-delayed {
+  animation: slide-up 0.8s ease-out 0.6s forwards;
+  opacity: 0;
+}
+
+.animate-scroll-indicator {
+  animation: scroll-indicator 1.5s ease-in-out infinite;
+}
+
+/* 긴 목록 렌더링 성능 최적화 (content-visibility) */
+.notice-card-item {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 140px;
+}
+
+/* Vercel Best Practice: rendering-content-visibility
+ * 학생 목록 행에서 화면 밖 항목의 렌더링을 지연시켜 초기 렌더 성능 향상
+ */
+.student-row {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 72px;
+}
+
+/* Vercel Best Practice: rendering-content-visibility
+ * 상담 목록 행에서 화면 밖 항목의 렌더링을 지연시켜 초기 렌더 성능 향상
+ */
+.consultation-row {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 76px;
+}
+
+/* Vercel Best Practice: rendering-content-visibility
+ * 캘린더 날짜 셀에서 화면 밖 항목의 렌더링을 지연시켜 초기 렌더 성능 향상
+ */
+.calendar-day-cell {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 80px;
+}
+
+/* Vercel Best Practice: rendering-content-visibility
+ * 반 카드 아이템에서 화면 밖 항목의 렌더링을 지연시켜 초기 렌더 성능 향상
+ * 카드 높이 약 200px로 설정
+ */
+.class-card-item {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 200px;
+}
+
+/* Vercel Best Practice: rendering-content-visibility
+ * 과제 상세 페이지 - 학생별 과제 행에서 화면 밖 항목의 렌더링을 지연시켜 초기 렌더 성능 향상
+ * 확장 시 높이가 달라지므로 contain-intrinsic-size는 기본 높이(축소 상태)로 설정
+ */
+.student-assignment-row {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 80px;
+}
+
+/* Vercel Best Practice: rendering-content-visibility
+ * 과제 상세 페이지 - 문제 목록 아이템에서 화면 밖 항목의 렌더링 최적화
+ */
+.problem-item {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 100px;
+}
+
+/* Vercel Best Practice: rendering-content-visibility
+ * 검색 결과 카드에서 화면 밖 항목의 렌더링을 지연시켜 초기 렌더 성능 향상
+ * 카드 높이 약 250px로 설정 (내용에 따라 가변)
+ */
+.search-result-card {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 250px;
+}

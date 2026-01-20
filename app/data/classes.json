@@ -1,0 +1,197 @@
+{
+  "classes": [
+    {
+      "id": "class-001",
+      "name": "중1 수학 기초반",
+      "description": "중학교 1학년 수학의 기초를 다지는 반입니다. 정수, 유리수, 문자와 식의 기본 개념을 학습합니다.",
+      "academy_id": "academy-001",
+      "teacher_id": "teacher-001",
+      "teacher_name": "박정훈",
+      "subject": "수학",
+      "grade": "중1",
+      "schedule": [
+        { "day": "monday", "startTime": "16:00", "endTime": "18:00" },
+        { "day": "wednesday", "startTime": "16:00", "endTime": "18:00" }
+      ],
+      "student_ids": ["student-001", "student-002", "student-003"],
+      "max_students": 8,
+      "status": "active",
+      "color": "#3B82F6",
+      "room": "A강의실",
+      "memo": "중간고사 대비 특강 예정 (2월)",
+      "created_at": "2025-01-01T09:00:00Z",
+      "updated_at": "2025-01-15T09:00:00Z"
+    },
+    {
+      "id": "class-002",
+      "name": "중1 수학 심화반",
+      "description": "중학교 1학년 수학 심화 학습반입니다. 응용 문제와 고난도 문제를 집중적으로 다룹니다.",
+      "academy_id": "academy-001",
+      "teacher_id": "teacher-001",
+      "teacher_name": "박정훈",
+      "subject": "수학",
+      "grade": "중1",
+      "schedule": [
+        { "day": "tuesday", "startTime": "18:00", "endTime": "20:00" },
+        { "day": "friday", "startTime": "18:00", "endTime": "20:00" }
+      ],
+      "student_ids": ["student-004"],
+      "max_students": 6,
+      "status": "active",
+      "color": "#8B5CF6",
+      "room": "B강의실",
+      "memo": null,
+      "created_at": "2025-01-01T09:00:00Z",
+      "updated_at": "2025-01-10T14:00:00Z"
+    },
+    {
+      "id": "class-003",
+      "name": "중2 수학 정규반",
+      "description": "중학교 2학년 수학 정규 과정입니다. 연립방정식, 부등식, 일차함수를 학습합니다.",
+      "academy_id": "academy-001",
+      "teacher_id": "teacher-001",
+      "teacher_name": "박정훈",
+      "subject": "수학",
+      "grade": "중2",
+      "schedule": [
+        { "day": "monday", "startTime": "18:00", "endTime": "20:00" },
+        { "day": "thursday", "startTime": "18:00", "endTime": "20:00" }
+      ],
+      "student_ids": ["student-005", "student-006"],
+      "max_students": 8,
+      "status": "active",
+      "color": "#10B981",
+      "room": "A강의실",
+      "memo": "3월부터 기말고사 대비 진행",
+      "created_at": "2025-01-02T09:00:00Z",
+      "updated_at": "2025-01-12T10:00:00Z"
+    },
+    {
+      "id": "class-004",
+      "name": "중1 영어 기초반",
+      "description": "영어 문법과 독해의 기초를 다지는 반입니다. be동사, 일반동사, 기초 문법을 학습합니다.",
+      "academy_id": "academy-001",
+      "teacher_id": "teacher-002",
+      "teacher_name": "김영희",
+      "subject": "영어",
+      "grade": "중1",
+      "schedule": [
+        { "day": "tuesday", "startTime": "16:00", "endTime": "18:00" },
+        { "day": "thursday", "startTime": "16:00", "endTime": "18:00" }
+      ],
+      "student_ids": ["student-001", "student-002", "student-004"],
+      "max_students": 10,
+      "status": "active",
+      "color": "#F59E0B",
+      "room": "C강의실",
+      "memo": null,
+      "created_at": "2025-01-03T09:00:00Z",
+      "updated_at": "2025-01-16T11:00:00Z"
+    },
+    {
+      "id": "class-005",
+      "name": "중3 수학 선행반",
+      "description": "중학교 3학년 수학 선행 학습반입니다. 고등수학 입문을 준비합니다.",
+      "academy_id": "academy-001",
+      "teacher_id": "teacher-001",
+      "teacher_name": "박정훈",
+      "subject": "수학",
+      "grade": "중3",
+      "schedule": [
+        { "day": "saturday", "startTime": "10:00", "endTime": "13:00" }
+      ],
+      "student_ids": [],
+      "max_students": 6,
+      "status": "inactive",
+      "color": "#EF4444",
+      "room": "A강의실",
+      "memo": "2월 개강 예정, 학생 모집 중",
+      "created_at": "2025-01-10T09:00:00Z",
+      "updated_at": "2025-01-10T09:00:00Z"
+    }
+  ],
+  "teachers": [
+    {
+      "id": "teacher-001",
+      "user_id": "user-t001",
+      "name": "박정훈",
+      "email": "junghoon@example.com",
+      "phone": "010-1234-5678",
+      "academy_id": "academy-001",
+      "subjects": ["수학"],
+      "bio": "수학 전문 강사입니다. 15년 경력."
+    },
+    {
+      "id": "teacher-002",
+      "user_id": "user-t002",
+      "name": "김영희",
+      "email": "younghee@example.com",
+      "phone": "010-2345-6789",
+      "academy_id": "academy-001",
+      "subjects": ["영어"],
+      "bio": "영어 전문 강사입니다. 10년 경력."
+    }
+  ],
+  "students": [
+    {
+      "id": "student-001",
+      "user_id": "user-s001",
+      "name": "김민준",
+      "email": "minjun@example.com",
+      "phone": "010-1111-1111",
+      "academy_id": "academy-001",
+      "grade": "중1",
+      "school_name": "서울중학교"
+    },
+    {
+      "id": "student-002",
+      "user_id": "user-s002",
+      "name": "이서연",
+      "email": "seoyeon@example.com",
+      "phone": "010-2222-2222",
+      "academy_id": "academy-001",
+      "grade": "중1",
+      "school_name": "서울중학교"
+    },
+    {
+      "id": "student-003",
+      "user_id": "user-s003",
+      "name": "박준혁",
+      "email": "junhyuk@example.com",
+      "phone": "010-3333-3333",
+      "academy_id": "academy-001",
+      "grade": "중1",
+      "school_name": "강남중학교"
+    },
+    {
+      "id": "student-004",
+      "user_id": "user-s004",
+      "name": "최수아",
+      "email": "sua@example.com",
+      "phone": "010-4444-4444",
+      "academy_id": "academy-001",
+      "grade": "중1",
+      "school_name": "강남중학교"
+    },
+    {
+      "id": "student-005",
+      "user_id": "user-s005",
+      "name": "정지우",
+      "email": "jiwoo@example.com",
+      "phone": "010-5555-5555",
+      "academy_id": "academy-001",
+      "grade": "중2",
+      "school_name": "서울중학교"
+    },
+    {
+      "id": "student-006",
+      "user_id": "user-s006",
+      "name": "한소희",
+      "email": "sohee@example.com",
+      "phone": "010-6666-6666",
+      "academy_id": "academy-001",
+      "grade": "중2",
+      "school_name": "강남중학교"
+    }
+  ]
+}

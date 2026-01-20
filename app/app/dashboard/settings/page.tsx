@@ -1,39 +1,124 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, startTransition, Suspense } from 'react'
+import dynamic from 'next/dynamic'
 import Header from '@/components/Header'
-import { User, Bell, Lock, Palette, CreditCard, HelpCircle, LogOut, ChevronRight, Moon, Sun, Smartphone } from 'lucide-react'
+import {
+  User,
+  Bell,
+  Lock,
+  Building2,
+  Palette,
+  CreditCard,
+  HelpCircle,
+  LogOut,
+  ChevronRight,
+  Moon,
+  Sun,
+  Smartphone,
+} from 'lucide-react'
+import type { ProfileSettings, NotificationSettings, AcademySettings } from '@/types/settings'
+
+// 설정 컴포넌트 동적 임포트 (bundle-dynamic-imports)
+// 무거운 폼 컴포넌트를 초기 번들에서 제외하여 TTI 개선
+const ProfileForm = dynamic(
+  () => import('@/components/settings/ProfileForm'),
+  { ssr: false, loading: () => <SettingsPanelSkeleton /> }
+)
+
+const PasswordForm = dynamic(
+  () => import('@/components/settings/PasswordForm'),
+  { ssr: false, loading: () => <SettingsPanelSkeleton /> }
+)
+
+const NotificationForm = dynamic(
+  () => import('@/components/settings/NotificationForm'),
+  { ssr: false, loading: () => <SettingsPanelSkeleton /> }
+)
+
+const AcademyForm = dynamic(
+  () => import('@/components/settings/AcademyForm'),
+  { ssr: false, loading: () => <SettingsPanelSkeleton /> }
+)
+
+// 로딩 스켈레톤 컴포넌트
+function SettingsPanelSkeleton() {
+  return (
+    <div className="card animate-pulse">
+      <div className="h-6 bg-gray-200 rounded w-32 mb-6" />
+      <div className="space-y-4">
+        <div className="h-10 bg-gray-200 rounded" />
+        <div className="h-10 bg-gray-200 rounded" />
+        <div className="h-10 bg-gray-200 rounded" />
+      </div>
+    </div>
+  )
+}
+
+// 사용자 역할 타입 (실제로는 세션에서 가져옴)
+type UserRole = 'owner' | 'teacher' | 'student' | 'parent'
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profile')
-  const [settings, setSettings] = useState({
-    // 프로필
-    name: '박정훈',
-    email: 'junghoon@academy.com',
-    phone: '010-1234-5678',
-    // 알림
-    emailNotification: true,
-    smsNotification: true,
-    pushNotification: false,
-    reportReminder: true,
-    assignmentReminder: true,
-    // 테마
-    theme: 'light',
-    // AI 설정
+
+  // 사용자 역할 (Mock: 원장으로 설정)
+  const [userRole] = useState<UserRole>('owner')
+
+  // 설정 데이터를 ref로 저장 (rerender-defer-reads)
+  // 콜백에서만 사용하므로 상태 구독 제거하여 불필요한 리렌더링 방지
+  const profileDataRef = useRef<ProfileSettings | null>(null)
+  const notificationDataRef = useRef<NotificationSettings | null>(null)
+  const academyDataRef = useRef<AcademySettings | null>(null)
+
+  // 화면 설정 (로컬 상태)
+  const [theme, setTheme] = useState('light')
+
+  // AI 설정 (로컬 상태)
+  const [aiSettings, setAiSettings] = useState({
     aiModel: 'gemini',
     autoReview: true,
-    reviewModels: ['gemini', 'gpt'],
+    reviewModels: ['gemini', 'gpt'] as string[],
   })
 
+  // 탭 목록 (역할에 따라 동적 생성)
   const tabs = [
     { id: 'profile', label: '프로필', icon: User },
+    { id: 'password', label: '비밀번호', icon: Lock },
     { id: 'notifications', label: '알림 설정', icon: Bell },
-    { id: 'security', label: '보안', icon: Lock },
+    ...(userRole === 'owner' ? [{ id: 'academy', label: '학원 설정', icon: Building2 }] : []),
     { id: 'appearance', label: '화면 설정', icon: Palette },
     { id: 'ai', label: 'AI 설정', icon: Smartphone },
     { id: 'billing', label: '결제/구독', icon: CreditCard },
     { id: 'help', label: '도움말', icon: HelpCircle },
   ]
+
+  // 탭 전환 핸들러 (rerender-transitions)
+  // startTransition으로 탭 전환을 non-urgent 업데이트로 표시하여 UI 반응성 유지
+  const handleTabChange = (tabId: string) => {
+    startTransition(() => {
+      setActiveTab(tabId)
+    })
+  }
+
+  const handleLogout = () => {
+    // TODO: 실제 로그아웃 로직 구현
+    if (confirm('로그아웃 하시겠습니까?')) {
+      window.location.href = '/login'
+    }
+  }
+
+  // 설정 데이터 저장 핸들러 (ref에 저장하여 리렌더링 방지)
+  const handleProfileSave = (data: ProfileSettings) => {
+    profileDataRef.current = data
+  }
+
+  const handleNotificationSave = (data: NotificationSettings) => {
+    notificationDataRef.current = data
+  }
+
+  const handleAcademySave = (data: AcademySettings) => {
+    academyDataRef.current = data
+  }
 
   return (
     <div>
@@ -50,7 +135,7 @@ export default function SettingsPage() {
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => handleTabChange(tab.id)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                     activeTab === tab.id
                       ? 'bg-primary-50 text-primary-700'
@@ -62,162 +147,47 @@ export default function SettingsPage() {
                 </button>
               ))}
               <hr className="my-2" />
-              <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-all">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-all"
+              >
                 <LogOut className="w-5 h-5" />
                 <span className="font-medium">로그아웃</span>
               </button>
             </div>
           </div>
 
-          {/* 설정 내용 */}
+          {/* 설정 내용 (bundle-conditional) */}
+          {/* 활성화된 탭의 컴포넌트만 렌더링하여 불필요한 모듈 로딩 방지 */}
           <div className="col-span-3">
-            {/* 프로필 */}
-            {activeTab === 'profile' && (
-              <div className="card">
-                <h3 className="text-lg font-bold text-gray-900 mb-6">프로필 설정</h3>
+            <Suspense fallback={<SettingsPanelSkeleton />}>
+              {/* 프로필 */}
+              {activeTab === 'profile' && (
+                <ProfileForm
+                  initialData={profileDataRef.current}
+                  onSave={handleProfileSave}
+                />
+              )}
 
-                <div className="flex items-center gap-6 mb-8">
-                  <div className="w-24 h-24 bg-primary-100 rounded-full flex items-center justify-center text-3xl font-bold text-primary-600">
-                    박
-                  </div>
-                  <div>
-                    <button className="btn-secondary mb-2">사진 변경</button>
-                    <p className="text-sm text-gray-500">JPG, PNG 파일 (최대 2MB)</p>
-                  </div>
-                </div>
+              {/* 비밀번호 */}
+              {activeTab === 'password' && <PasswordForm />}
 
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="label">이름</label>
-                      <input
-                        type="text"
-                        className="input"
-                        value={settings.name}
-                        onChange={(e) => setSettings({ ...settings, name: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <label className="label">이메일</label>
-                      <input
-                        type="email"
-                        className="input"
-                        value={settings.email}
-                        onChange={(e) => setSettings({ ...settings, email: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="label">전화번호</label>
-                    <input
-                      type="tel"
-                      className="input"
-                      value={settings.phone}
-                      onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
-                    />
-                  </div>
-                </div>
+              {/* 알림 설정 */}
+              {activeTab === 'notifications' && (
+                <NotificationForm
+                  initialData={notificationDataRef.current}
+                  onSave={handleNotificationSave}
+                />
+              )}
 
-                <div className="flex justify-end mt-6">
-                  <button className="btn-primary">저장하기</button>
-                </div>
-              </div>
-            )}
-
-            {/* 알림 설정 */}
-            {activeTab === 'notifications' && (
-              <div className="card">
-                <h3 className="text-lg font-bold text-gray-900 mb-6">알림 설정</h3>
-
-                <div className="space-y-6">
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-4">알림 수신 방법</h4>
-                    <div className="space-y-3">
-                      {[
-                        { key: 'emailNotification', label: '이메일 알림', desc: '중요 알림을 이메일로 받습니다' },
-                        { key: 'smsNotification', label: '문자 알림', desc: '긴급 알림을 문자로 받습니다' },
-                        { key: 'pushNotification', label: '푸시 알림', desc: '앱 푸시 알림을 받습니다' },
-                      ].map((item) => (
-                        <div key={item.key} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                          <div>
-                            <p className="font-medium text-gray-900">{item.label}</p>
-                            <p className="text-sm text-gray-500">{item.desc}</p>
-                          </div>
-                          <label className="relative inline-flex items-center cursor-pointer">
-                            <input
-                              type="checkbox"
-                              className="sr-only peer"
-                              checked={settings[item.key as keyof typeof settings] as boolean}
-                              onChange={(e) => setSettings({ ...settings, [item.key]: e.target.checked })}
-                            />
-                            <div className="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-primary-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-4">알림 종류</h4>
-                    <div className="space-y-3">
-                      {[
-                        { key: 'reportReminder', label: '보고서 발송 알림', desc: '주간 보고서 발송 시점을 알려드립니다' },
-                        { key: 'assignmentReminder', label: '과제 마감 알림', desc: '과제 마감 전 미제출 학생을 알려드립니다' },
-                      ].map((item) => (
-                        <div key={item.key} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                          <div>
-                            <p className="font-medium text-gray-900">{item.label}</p>
-                            <p className="text-sm text-gray-500">{item.desc}</p>
-                          </div>
-                          <label className="relative inline-flex items-center cursor-pointer">
-                            <input
-                              type="checkbox"
-                              className="sr-only peer"
-                              checked={settings[item.key as keyof typeof settings] as boolean}
-                              onChange={(e) => setSettings({ ...settings, [item.key]: e.target.checked })}
-                            />
-                            <div className="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-primary-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 보안 */}
-            {activeTab === 'security' && (
-              <div className="card">
-                <h3 className="text-lg font-bold text-gray-900 mb-6">보안 설정</h3>
-
-                <div className="space-y-4">
-                  <div className="p-4 bg-gray-50 rounded-xl flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-gray-900">비밀번호 변경</p>
-                      <p className="text-sm text-gray-500">마지막 변경: 30일 전</p>
-                    </div>
-                    <button className="btn-secondary">변경하기</button>
-                  </div>
-                  <div className="p-4 bg-gray-50 rounded-xl flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-gray-900">2단계 인증</p>
-                      <p className="text-sm text-gray-500">추가 보안을 위해 2단계 인증을 설정하세요</p>
-                    </div>
-                    <button className="btn-secondary">설정하기</button>
-                  </div>
-                  <div className="p-4 bg-gray-50 rounded-xl flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-gray-900">로그인 기록</p>
-                      <p className="text-sm text-gray-500">최근 로그인 내역을 확인합니다</p>
-                    </div>
-                    <button className="btn-ghost flex items-center gap-1">
-                      보기 <ChevronRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
+              {/* 학원 설정 (원장 전용) */}
+              {activeTab === 'academy' && userRole === 'owner' && (
+                <AcademyForm
+                  initialData={academyDataRef.current}
+                  onSave={handleAcademySave}
+                />
+              )}
+            </Suspense>
 
             {/* 화면 설정 */}
             {activeTab === 'appearance' && (
@@ -231,20 +201,22 @@ export default function SettingsPage() {
                       { value: 'light', label: '라이트', icon: Sun },
                       { value: 'dark', label: '다크', icon: Moon },
                       { value: 'system', label: '시스템', icon: Smartphone },
-                    ].map((theme) => (
+                    ].map((themeOption) => (
                       <button
-                        key={theme.value}
-                        onClick={() => setSettings({ ...settings, theme: theme.value })}
+                        key={themeOption.value}
+                        onClick={() => setTheme(themeOption.value)}
                         className={`p-4 rounded-xl border-2 transition-all ${
-                          settings.theme === theme.value
+                          theme === themeOption.value
                             ? 'border-primary-500 bg-primary-50'
                             : 'border-gray-200 hover:border-gray-300'
                         }`}
                       >
-                        <theme.icon className={`w-6 h-6 mx-auto mb-2 ${
-                          settings.theme === theme.value ? 'text-primary-600' : 'text-gray-400'
-                        }`} />
-                        <p className="font-medium text-gray-900">{theme.label}</p>
+                        <themeOption.icon
+                          className={`w-6 h-6 mx-auto mb-2 ${
+                            theme === themeOption.value ? 'text-primary-600' : 'text-gray-400'
+                          }`}
+                        />
+                        <p className="font-medium text-gray-900">{themeOption.label}</p>
                       </button>
                     ))}
                   </div>
@@ -262,14 +234,18 @@ export default function SettingsPage() {
                     <h4 className="font-medium text-gray-900 mb-4">문제 생성 AI</h4>
                     <select
                       className="input"
-                      value={settings.aiModel}
-                      onChange={(e) => setSettings({ ...settings, aiModel: e.target.value })}
+                      value={aiSettings.aiModel}
+                      onChange={(e) =>
+                        setAiSettings({ ...aiSettings, aiModel: e.target.value })
+                      }
                     >
                       <option value="gemini">Gemini 3.0 Pro (추천)</option>
                       <option value="gpt">GPT-4</option>
                       <option value="claude">Claude 3</option>
                     </select>
-                    <p className="text-sm text-gray-500 mt-2">문제 생성에 사용할 AI 모델을 선택합니다</p>
+                    <p className="text-sm text-gray-500 mt-2">
+                      문제 생성에 사용할 AI 모델을 선택합니다
+                    </p>
                   </div>
 
                   <div>
@@ -283,32 +259,51 @@ export default function SettingsPage() {
                         <input
                           type="checkbox"
                           className="sr-only peer"
-                          checked={settings.autoReview}
-                          onChange={(e) => setSettings({ ...settings, autoReview: e.target.checked })}
+                          checked={aiSettings.autoReview}
+                          onChange={(e) =>
+                            setAiSettings({ ...aiSettings, autoReview: e.target.checked })
+                          }
                         />
                         <div className="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-primary-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                       </label>
                     </div>
 
-                    {settings.autoReview && (
+                    {aiSettings.autoReview && (
                       <div className="p-4 bg-gray-50 rounded-xl">
-                        <p className="text-sm font-medium text-gray-700 mb-3">검수에 사용할 AI (멀티 선택)</p>
+                        <p className="text-sm font-medium text-gray-700 mb-3">
+                          검수에 사용할 AI (멀티 선택)
+                        </p>
                         <div className="flex gap-2 flex-wrap">
                           {['gemini', 'gpt', 'claude'].map((model) => (
-                            <label key={model} className="flex items-center gap-2 px-4 py-2 border rounded-lg cursor-pointer hover:bg-white">
+                            <label
+                              key={model}
+                              className="flex items-center gap-2 px-4 py-2 border rounded-lg cursor-pointer hover:bg-white"
+                            >
                               <input
                                 type="checkbox"
                                 className="w-4 h-4 rounded text-primary-500"
-                                checked={settings.reviewModels.includes(model)}
+                                checked={aiSettings.reviewModels.includes(model)}
                                 onChange={(e) => {
                                   if (e.target.checked) {
-                                    setSettings({ ...settings, reviewModels: [...settings.reviewModels, model] })
+                                    setAiSettings({
+                                      ...aiSettings,
+                                      reviewModels: [...aiSettings.reviewModels, model],
+                                    })
                                   } else {
-                                    setSettings({ ...settings, reviewModels: settings.reviewModels.filter(m => m !== model) })
+                                    setAiSettings({
+                                      ...aiSettings,
+                                      reviewModels: aiSettings.reviewModels.filter(
+                                        (m) => m !== model
+                                      ),
+                                    })
                                   }
                                 }}
                               />
-                              {model === 'gemini' ? 'Gemini' : model === 'gpt' ? 'GPT-4' : 'Claude'}
+                              {model === 'gemini'
+                                ? 'Gemini'
+                                : model === 'gpt'
+                                ? 'GPT-4'
+                                : 'Claude'}
                             </label>
                           ))}
                         </div>
@@ -373,7 +368,10 @@ export default function SettingsPage() {
                     { label: '문의하기', desc: '궁금한 점을 문의해주세요' },
                     { label: '버그 신고', desc: '오류를 발견하셨나요?' },
                   ].map((item, i) => (
-                    <div key={i} className="p-4 bg-gray-50 rounded-xl flex items-center justify-between hover:bg-gray-100 cursor-pointer transition-colors">
+                    <div
+                      key={i}
+                      className="p-4 bg-gray-50 rounded-xl flex items-center justify-between hover:bg-gray-100 cursor-pointer transition-colors"
+                    >
                       <div>
                         <p className="font-medium text-gray-900">{item.label}</p>
                         <p className="text-sm text-gray-500">{item.desc}</p>
@@ -385,7 +383,7 @@ export default function SettingsPage() {
 
                 <div className="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
                   <p>EduFlow v0.1.0</p>
-                  <p className="mt-1">© 2025 EduFlow. All rights reserved.</p>
+                  <p className="mt-1">2025 EduFlow. All rights reserved.</p>
                 </div>
               </div>
             )}

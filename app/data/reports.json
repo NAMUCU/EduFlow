@@ -1,0 +1,682 @@
+{
+  "reports": [
+    {
+      "id": "RPT001",
+      "academyId": "ACD001",
+      "studentId": "STU001",
+      "student": {
+        "id": "STU001",
+        "name": "김민준",
+        "grade": "중2",
+        "school": "분당중학교",
+        "className": "A반",
+        "subjects": ["수학", "영어"]
+      },
+      "parent": {
+        "name": "김영희",
+        "phone": "010-8765-4321",
+        "email": "yhkim@email.com"
+      },
+      "academy": {
+        "id": "ACD001",
+        "name": "에듀플로우 수학학원",
+        "teacherName": "박선생",
+        "teacherPhone": "010-1234-0000"
+      },
+      "period": {
+        "type": "weekly",
+        "startDate": "2025-01-13",
+        "endDate": "2025-01-19",
+        "label": "2025년 1월 3주차",
+        "year": 2025,
+        "month": 1,
+        "week": 3
+      },
+      "status": "generated",
+      "gradeAnalysis": {
+        "overallScore": 85,
+        "previousOverallScore": 78,
+        "overallTrend": "up",
+        "overallChangeAmount": 7,
+        "subjectGrades": [
+          {
+            "subject": "수학",
+            "currentScore": 85,
+            "previousScore": 78,
+            "averageScore": 82,
+            "highestScore": 92,
+            "lowestScore": 68,
+            "testCount": 5,
+            "trend": "up",
+            "changeAmount": 7
+          },
+          {
+            "subject": "영어",
+            "currentScore": 88,
+            "previousScore": 85,
+            "averageScore": 86,
+            "highestScore": 92,
+            "lowestScore": 80,
+            "testCount": 4,
+            "trend": "up",
+            "changeAmount": 3
+          }
+        ],
+        "unitAnalysis": [
+          {
+            "subject": "수학",
+            "unitName": "인수분해",
+            "correctCount": 18,
+            "totalCount": 20,
+            "correctRate": 90,
+            "isWeak": false
+          },
+          {
+            "subject": "수학",
+            "unitName": "이차방정식 기본",
+            "correctCount": 16,
+            "totalCount": 20,
+            "correctRate": 80,
+            "isWeak": false
+          },
+          {
+            "subject": "수학",
+            "unitName": "이차방정식 판별식",
+            "correctCount": 10,
+            "totalCount": 20,
+            "correctRate": 50,
+            "isWeak": true
+          },
+          {
+            "subject": "수학",
+            "unitName": "근과 계수의 관계",
+            "correctCount": 11,
+            "totalCount": 20,
+            "correctRate": 55,
+            "isWeak": true
+          }
+        ],
+        "weakUnits": [
+          {
+            "subject": "수학",
+            "unitName": "이차방정식 판별식",
+            "correctCount": 10,
+            "totalCount": 20,
+            "correctRate": 50,
+            "isWeak": true
+          },
+          {
+            "subject": "수학",
+            "unitName": "근과 계수의 관계",
+            "correctCount": 11,
+            "totalCount": 20,
+            "correctRate": 55,
+            "isWeak": true
+          }
+        ],
+        "strongUnits": [
+          {
+            "subject": "수학",
+            "unitName": "인수분해",
+            "correctCount": 18,
+            "totalCount": 20,
+            "correctRate": 90,
+            "isWeak": false
+          },
+          {
+            "subject": "수학",
+            "unitName": "이차방정식 기본",
+            "correctCount": 16,
+            "totalCount": 20,
+            "correctRate": 80,
+            "isWeak": false
+          }
+        ],
+        "gradeDistribution": [
+          { "range": "90-100", "count": 2, "percentage": 20 },
+          { "range": "80-89", "count": 4, "percentage": 40 },
+          { "range": "70-79", "count": 3, "percentage": 30 },
+          { "range": "60-69", "count": 1, "percentage": 10 },
+          { "range": "0-59", "count": 0, "percentage": 0 }
+        ],
+        "dailyScoreTrend": [
+          { "date": "2025-01-13", "score": 78, "subject": "수학" },
+          { "date": "2025-01-14", "score": 82, "subject": "수학" },
+          { "date": "2025-01-15", "score": 85, "subject": "영어" },
+          { "date": "2025-01-17", "score": 88, "subject": "영어" },
+          { "date": "2025-01-18", "score": 85, "subject": "수학" }
+        ]
+      },
+      "attendanceAnalysis": {
+        "totalClassDays": 5,
+        "presentDays": 5,
+        "absentDays": 0,
+        "lateDays": 0,
+        "earlyLeaveDays": 0,
+        "sickLeaveDays": 0,
+        "attendanceRate": 100,
+        "previousAttendanceRate": 100,
+        "attendanceRateTrend": "stable",
+        "dailyAttendance": [
+          { "date": "2025-01-13", "status": "present", "checkInTime": "16:30", "checkOutTime": "19:00" },
+          { "date": "2025-01-14", "status": "present", "checkInTime": "16:25", "checkOutTime": "19:00" },
+          { "date": "2025-01-15", "status": "present", "checkInTime": "16:30", "checkOutTime": "19:00" },
+          { "date": "2025-01-17", "status": "present", "checkInTime": "16:35", "checkOutTime": "19:00" },
+          { "date": "2025-01-18", "status": "present", "checkInTime": "16:30", "checkOutTime": "19:00" }
+        ]
+      },
+      "aiAnalysis": {
+        "scoreTrendAnalysis": {
+          "summary": "민준이의 이번 주 성적은 지난 주 대비 7점 상승하여 긍정적인 추세를 보이고 있습니다.",
+          "trendDescription": "최근 3주간 꾸준한 상승세를 유지하고 있으며, 특히 인수분해 단원에서 뛰어난 성과를 보이고 있습니다.",
+          "keyInsights": [
+            "인수분해 활용 능력이 크게 향상되었습니다",
+            "이차방정식 기본 풀이는 안정적으로 수행하고 있습니다",
+            "판별식 개념 이해가 다소 부족한 편입니다"
+          ]
+        },
+        "weakUnitAnalysis": {
+          "units": [
+            {
+              "subject": "수학",
+              "unitName": "이차방정식 판별식",
+              "description": "D = b² - 4ac 공식의 활용과 판별식의 의미를 연결짓는 데 어려움을 겪고 있습니다.",
+              "suggestedPriority": 1
+            },
+            {
+              "subject": "수학",
+              "unitName": "근과 계수의 관계",
+              "description": "두 근의 합과 곱을 활용한 문제 풀이에서 계산 실수가 자주 발생합니다.",
+              "suggestedPriority": 2
+            }
+          ],
+          "overallDescription": "이차방정식의 심화 개념(판별식, 근과 계수의 관계)에 대한 추가 학습이 필요합니다. 기본 풀이는 잘 하고 있으니, 개념 정리 후 응용 문제 연습을 권장합니다."
+        },
+        "studyRecommendation": {
+          "shortTermGoals": [
+            {
+              "goal": "판별식 개념 복습 및 연습문제 10문제 풀기",
+              "reason": "취약 단원 보완을 위해 우선적으로 학습이 필요합니다",
+              "difficulty": "medium"
+            },
+            {
+              "goal": "근과 계수의 관계 공식 암기 및 기본 문제 풀이",
+              "reason": "공식 암기가 선행되어야 응용 문제 풀이가 가능합니다",
+              "difficulty": "easy"
+            }
+          ],
+          "midTermGoals": [
+            {
+              "goal": "이차방정식 종합 문제 완벽 정복",
+              "reason": "중간고사 범위에 포함되며, 심화 문제 출제 빈도가 높습니다"
+            },
+            {
+              "goal": "이차함수로의 연계 학습 시작",
+              "reason": "이차방정식 완벽 이해 후 이차함수로 자연스럽게 확장할 수 있습니다"
+            }
+          ],
+          "recommendedMaterials": [
+            {
+              "type": "problem",
+              "title": "판별식 활용 문제 모음",
+              "description": "실근, 허근 판별 및 근의 개수 문제 20선",
+              "subject": "수학",
+              "unit": "이차방정식 판별식"
+            },
+            {
+              "type": "concept",
+              "title": "근과 계수의 관계 개념 정리",
+              "description": "두 근의 합, 곱을 활용한 식의 값 계산",
+              "subject": "수학",
+              "unit": "근과 계수의 관계"
+            }
+          ],
+          "studyStrategies": [
+            "하루 30분씩 취약 단원 집중 복습",
+            "오답노트 작성 및 유사 문제 반복 풀이",
+            "개념 이해 후 바로 연습문제로 적용해보기"
+          ],
+          "motivationMessage": "민준이가 이번 주에 7점이나 올랐어요! 꾸준히 노력하는 모습이 정말 대단합니다. 취약한 부분도 조금만 더 집중하면 금방 극복할 수 있을 거예요. 화이팅!"
+        },
+        "parentMessage": "민준이가 이번 주에 이차방정식 단원에서 7점이나 올랐습니다! 특히 인수분해를 활용한 풀이를 잘 해내고 있습니다. 다만 판별식 부분은 아직 헷갈려하니, 주말에 같이 복습해주시면 좋겠습니다. 전체적으로 긍정적인 성장세를 보이고 있어 앞으로가 기대됩니다.",
+        "studentMessage": "민준아, 이번 주 정말 열심히 했어! 인수분해 실력이 많이 늘었어. 판별식이랑 근과 계수의 관계만 조금 더 연습하면 90점대도 금방이야. 다음 주에도 이 기세로 화이팅!",
+        "teacherCommentDraft": "민준이의 이번 주 학습 태도와 성과가 매우 만족스럽습니다. 기초가 탄탄해지고 있어 심화 학습으로 나아갈 준비가 되어가고 있습니다. 취약 단원 보완에 조금 더 집중하면 좋겠습니다.",
+        "generatedAt": "2025-01-19T10:00:00Z",
+        "modelInfo": {
+          "model": "gemini-3.0-pro",
+          "confidence": 0.92
+        }
+      },
+      "createdAt": "2025-01-19T10:00:00Z",
+      "updatedAt": "2025-01-19T10:00:00Z",
+      "createdBy": "TCH001"
+    },
+    {
+      "id": "RPT002",
+      "academyId": "ACD001",
+      "studentId": "STU002",
+      "student": {
+        "id": "STU002",
+        "name": "이서연",
+        "grade": "중3",
+        "school": "정자중학교",
+        "className": "심화반",
+        "subjects": ["수학", "영어", "과학"]
+      },
+      "parent": {
+        "name": "이철수",
+        "phone": "010-9876-5432",
+        "email": "cslee@email.com"
+      },
+      "academy": {
+        "id": "ACD001",
+        "name": "에듀플로우 수학학원",
+        "teacherName": "박선생",
+        "teacherPhone": "010-1234-0000"
+      },
+      "period": {
+        "type": "weekly",
+        "startDate": "2025-01-13",
+        "endDate": "2025-01-19",
+        "label": "2025년 1월 3주차",
+        "year": 2025,
+        "month": 1,
+        "week": 3
+      },
+      "status": "sent",
+      "gradeAnalysis": {
+        "overallScore": 92,
+        "previousOverallScore": 90,
+        "overallTrend": "up",
+        "overallChangeAmount": 2,
+        "subjectGrades": [
+          {
+            "subject": "수학",
+            "currentScore": 94,
+            "previousScore": 92,
+            "averageScore": 93,
+            "highestScore": 98,
+            "lowestScore": 88,
+            "testCount": 6,
+            "trend": "up",
+            "changeAmount": 2
+          },
+          {
+            "subject": "영어",
+            "currentScore": 90,
+            "previousScore": 88,
+            "averageScore": 89,
+            "highestScore": 95,
+            "lowestScore": 85,
+            "testCount": 5,
+            "trend": "up",
+            "changeAmount": 2
+          }
+        ],
+        "unitAnalysis": [
+          {
+            "subject": "수학",
+            "unitName": "삼각형 닮음",
+            "correctCount": 19,
+            "totalCount": 20,
+            "correctRate": 95,
+            "isWeak": false
+          },
+          {
+            "subject": "수학",
+            "unitName": "직각삼각형 성질",
+            "correctCount": 18,
+            "totalCount": 20,
+            "correctRate": 90,
+            "isWeak": false
+          },
+          {
+            "subject": "수학",
+            "unitName": "피타고라스 정리 응용",
+            "correctCount": 14,
+            "totalCount": 20,
+            "correctRate": 70,
+            "isWeak": false
+          }
+        ],
+        "weakUnits": [],
+        "strongUnits": [
+          {
+            "subject": "수학",
+            "unitName": "삼각형 닮음",
+            "correctCount": 19,
+            "totalCount": 20,
+            "correctRate": 95,
+            "isWeak": false
+          },
+          {
+            "subject": "수학",
+            "unitName": "직각삼각형 성질",
+            "correctCount": 18,
+            "totalCount": 20,
+            "correctRate": 90,
+            "isWeak": false
+          }
+        ],
+        "gradeDistribution": [
+          { "range": "90-100", "count": 5, "percentage": 50 },
+          { "range": "80-89", "count": 4, "percentage": 40 },
+          { "range": "70-79", "count": 1, "percentage": 10 },
+          { "range": "60-69", "count": 0, "percentage": 0 },
+          { "range": "0-59", "count": 0, "percentage": 0 }
+        ],
+        "dailyScoreTrend": [
+          { "date": "2025-01-13", "score": 90, "subject": "수학" },
+          { "date": "2025-01-14", "score": 92, "subject": "영어" },
+          { "date": "2025-01-15", "score": 94, "subject": "수학" },
+          { "date": "2025-01-17", "score": 88, "subject": "영어" },
+          { "date": "2025-01-18", "score": 92, "subject": "수학" }
+        ]
+      },
+      "attendanceAnalysis": {
+        "totalClassDays": 5,
+        "presentDays": 5,
+        "absentDays": 0,
+        "lateDays": 0,
+        "earlyLeaveDays": 0,
+        "sickLeaveDays": 0,
+        "attendanceRate": 100,
+        "previousAttendanceRate": 100,
+        "attendanceRateTrend": "stable",
+        "dailyAttendance": [
+          { "date": "2025-01-13", "status": "present", "checkInTime": "16:00", "checkOutTime": "19:30" },
+          { "date": "2025-01-14", "status": "present", "checkInTime": "16:00", "checkOutTime": "19:30" },
+          { "date": "2025-01-15", "status": "present", "checkInTime": "16:00", "checkOutTime": "19:30" },
+          { "date": "2025-01-17", "status": "present", "checkInTime": "16:00", "checkOutTime": "19:30" },
+          { "date": "2025-01-18", "status": "present", "checkInTime": "16:00", "checkOutTime": "19:30" }
+        ]
+      },
+      "aiAnalysis": {
+        "scoreTrendAnalysis": {
+          "summary": "서연이는 지속적으로 우수한 성적을 유지하며 안정적인 학습 패턴을 보이고 있습니다.",
+          "trendDescription": "전 과목 90점 이상을 꾸준히 유지하고 있으며, 특히 수학에서 두각을 나타내고 있습니다.",
+          "keyInsights": [
+            "삼각형 관련 단원에서 뛰어난 이해력을 보입니다",
+            "영어도 꾸준히 상승세를 유지하고 있습니다",
+            "심화 문제에 도전할 준비가 되어 있습니다"
+          ]
+        },
+        "weakUnitAnalysis": {
+          "units": [
+            {
+              "subject": "수학",
+              "unitName": "피타고라스 정리 응용",
+              "description": "응용 문제에서 복합적인 접근이 필요할 때 시간이 더 소요됩니다.",
+              "suggestedPriority": 1
+            }
+          ],
+          "overallDescription": "전반적으로 취약점이 거의 없는 우수한 학생입니다. 피타고라스 정리 응용 문제만 조금 더 연습하면 완벽에 가까워질 것입니다."
+        },
+        "studyRecommendation": {
+          "shortTermGoals": [
+            {
+              "goal": "피타고라스 정리 심화 문제 도전",
+              "reason": "현재 수준에서 한 단계 더 성장하기 위해",
+              "difficulty": "hard"
+            }
+          ],
+          "midTermGoals": [
+            {
+              "goal": "특목고 수학 기출문제 풀이",
+              "reason": "특목고 진학 준비에 필요합니다"
+            }
+          ],
+          "recommendedMaterials": [
+            {
+              "type": "problem",
+              "title": "피타고라스 정리 심화 문제집",
+              "description": "경시대회 수준의 응용 문제",
+              "subject": "수학",
+              "unit": "피타고라스 정리"
+            }
+          ],
+          "studyStrategies": [
+            "난이도 높은 문제에 도전하여 사고력 확장",
+            "시간 제한을 두고 문제 풀이 연습"
+          ],
+          "motivationMessage": "서연이의 꾸준한 노력이 빛나고 있어요! 이대로만 하면 특목고도 무난할 거예요. 자신감을 가지세요!"
+        },
+        "parentMessage": "서연이가 꾸준히 좋은 성적을 유지하고 있습니다! 삼각형 단원은 거의 완벽하게 이해하고 있으며, 다음 주부터는 조금 더 어려운 심화 문제에 도전해볼 예정입니다. 특목고 준비도 순조롭게 진행되고 있습니다.",
+        "studentMessage": "서연아, 이번 주도 정말 잘했어! 90점대를 꾸준히 유지하는 게 대단해. 이제 심화 문제로 실력을 더 키워보자!",
+        "teacherCommentDraft": "서연이는 모든 면에서 모범적인 학생입니다. 학습 태도, 성적, 출석률 모두 우수하며 특목고 진학을 충분히 노려볼 수 있는 실력입니다.",
+        "generatedAt": "2025-01-18T09:00:00Z",
+        "modelInfo": {
+          "model": "gemini-3.0-pro",
+          "confidence": 0.95
+        }
+      },
+      "sentAt": "2025-01-18T14:00:00Z",
+      "sentTo": [
+        { "type": "sms", "recipient": "010-9876-5432" }
+      ],
+      "createdAt": "2025-01-18T09:00:00Z",
+      "updatedAt": "2025-01-18T14:00:00Z",
+      "createdBy": "TCH001"
+    },
+    {
+      "id": "RPT003",
+      "academyId": "ACD001",
+      "studentId": "STU003",
+      "student": {
+        "id": "STU003",
+        "name": "박지호",
+        "grade": "중2",
+        "school": "내정중학교",
+        "className": "B반",
+        "subjects": ["수학"]
+      },
+      "parent": {
+        "name": "박미영",
+        "phone": "010-8765-1234",
+        "email": "mypark@email.com"
+      },
+      "academy": {
+        "id": "ACD001",
+        "name": "에듀플로우 수학학원",
+        "teacherName": "박선생",
+        "teacherPhone": "010-1234-0000"
+      },
+      "period": {
+        "type": "weekly",
+        "startDate": "2025-01-13",
+        "endDate": "2025-01-19",
+        "label": "2025년 1월 3주차",
+        "year": 2025,
+        "month": 1,
+        "week": 3
+      },
+      "status": "draft",
+      "gradeAnalysis": {
+        "overallScore": 68,
+        "previousOverallScore": 72,
+        "overallTrend": "down",
+        "overallChangeAmount": -4,
+        "subjectGrades": [
+          {
+            "subject": "수학",
+            "currentScore": 68,
+            "previousScore": 72,
+            "averageScore": 70,
+            "highestScore": 78,
+            "lowestScore": 62,
+            "testCount": 5,
+            "trend": "down",
+            "changeAmount": -4
+          }
+        ],
+        "unitAnalysis": [
+          {
+            "subject": "수학",
+            "unitName": "일차방정식",
+            "correctCount": 16,
+            "totalCount": 20,
+            "correctRate": 80,
+            "isWeak": false
+          },
+          {
+            "subject": "수학",
+            "unitName": "연립방정식",
+            "correctCount": 10,
+            "totalCount": 20,
+            "correctRate": 50,
+            "isWeak": true
+          },
+          {
+            "subject": "수학",
+            "unitName": "일차함수 그래프",
+            "correctCount": 9,
+            "totalCount": 20,
+            "correctRate": 45,
+            "isWeak": true
+          }
+        ],
+        "weakUnits": [
+          {
+            "subject": "수학",
+            "unitName": "연립방정식",
+            "correctCount": 10,
+            "totalCount": 20,
+            "correctRate": 50,
+            "isWeak": true
+          },
+          {
+            "subject": "수학",
+            "unitName": "일차함수 그래프",
+            "correctCount": 9,
+            "totalCount": 20,
+            "correctRate": 45,
+            "isWeak": true
+          }
+        ],
+        "strongUnits": [
+          {
+            "subject": "수학",
+            "unitName": "일차방정식",
+            "correctCount": 16,
+            "totalCount": 20,
+            "correctRate": 80,
+            "isWeak": false
+          }
+        ],
+        "gradeDistribution": [
+          { "range": "90-100", "count": 0, "percentage": 0 },
+          { "range": "80-89", "count": 1, "percentage": 20 },
+          { "range": "70-79", "count": 2, "percentage": 40 },
+          { "range": "60-69", "count": 2, "percentage": 40 },
+          { "range": "0-59", "count": 0, "percentage": 0 }
+        ],
+        "dailyScoreTrend": [
+          { "date": "2025-01-13", "score": 72, "subject": "수학" },
+          { "date": "2025-01-15", "score": 65, "subject": "수학" },
+          { "date": "2025-01-17", "score": 70, "subject": "수학" },
+          { "date": "2025-01-18", "score": 68, "subject": "수학" }
+        ]
+      },
+      "attendanceAnalysis": {
+        "totalClassDays": 5,
+        "presentDays": 4,
+        "absentDays": 1,
+        "lateDays": 0,
+        "earlyLeaveDays": 0,
+        "sickLeaveDays": 0,
+        "attendanceRate": 80,
+        "previousAttendanceRate": 100,
+        "attendanceRateTrend": "down",
+        "dailyAttendance": [
+          { "date": "2025-01-13", "status": "present", "checkInTime": "16:40", "checkOutTime": "19:00" },
+          { "date": "2025-01-14", "status": "absent", "memo": "병원 방문" },
+          { "date": "2025-01-15", "status": "present", "checkInTime": "16:35", "checkOutTime": "19:00" },
+          { "date": "2025-01-17", "status": "present", "checkInTime": "16:30", "checkOutTime": "19:00" },
+          { "date": "2025-01-18", "status": "present", "checkInTime": "16:30", "checkOutTime": "19:00" }
+        ],
+        "notes": "14일 병원 방문으로 결석"
+      },
+      "aiAnalysis": {
+        "scoreTrendAnalysis": {
+          "summary": "지호의 이번 주 성적은 지난 주 대비 4점 하락하여 추가적인 관심이 필요합니다.",
+          "trendDescription": "연립방정식과 일차함수 단원에서 어려움을 겪고 있으며, 기초 개념 보충이 필요합니다.",
+          "keyInsights": [
+            "일차방정식 기초는 잘 잡혀 있습니다",
+            "연립방정식 대입법/가감법에서 혼란을 겪고 있습니다",
+            "일차함수의 그래프 해석에 어려움이 있습니다"
+          ]
+        },
+        "weakUnitAnalysis": {
+          "units": [
+            {
+              "subject": "수학",
+              "unitName": "연립방정식",
+              "description": "대입법과 가감법을 언제 사용해야 하는지 판단하는 데 어려움을 겪고 있습니다.",
+              "suggestedPriority": 1
+            },
+            {
+              "subject": "수학",
+              "unitName": "일차함수 그래프",
+              "description": "기울기와 y절편의 의미를 그래프와 연결짓는 것이 어렵습니다.",
+              "suggestedPriority": 2
+            }
+          ],
+          "overallDescription": "기초 단원(일차방정식)은 잘 이해하고 있으나, 심화 단원으로 넘어가면서 개념 연결이 안 되고 있습니다. 대입법부터 차근차근 다시 시작하는 것을 추천합니다."
+        },
+        "studyRecommendation": {
+          "shortTermGoals": [
+            {
+              "goal": "연립방정식 대입법 기초 문제 20문제 풀기",
+              "reason": "가감법보다 대입법이 더 직관적이므로 먼저 익히는 것이 좋습니다",
+              "difficulty": "easy"
+            },
+            {
+              "goal": "일차함수 개념 정리 및 그래프 그리기 연습",
+              "reason": "시각적으로 이해하면 더 쉽게 접근할 수 있습니다",
+              "difficulty": "easy"
+            }
+          ],
+          "midTermGoals": [
+            {
+              "goal": "연립방정식 종합 문제 해결",
+              "reason": "중간고사 대비를 위해 필수입니다"
+            }
+          ],
+          "recommendedMaterials": [
+            {
+              "type": "concept",
+              "title": "연립방정식 개념 정리",
+              "description": "대입법과 가감법의 차이점 및 활용법",
+              "subject": "수학",
+              "unit": "연립방정식"
+            },
+            {
+              "type": "worksheet",
+              "title": "일차함수 그래프 연습지",
+              "description": "기울기, y절편 찾기 및 그래프 그리기",
+              "subject": "수학",
+              "unit": "일차함수"
+            }
+          ],
+          "studyStrategies": [
+            "하루 20분씩 꾸준히 기초 문제 풀기",
+            "틀린 문제는 바로 오답노트에 기록하기",
+            "모르는 부분은 바로 질문하기"
+          ],
+          "motivationMessage": "지호야, 이번 주는 조금 어려웠지만 괜찮아! 일차방정식을 잘하고 있으니 연립방정식도 분명 할 수 있어. 같이 차근차근 해보자!"
+        },
+        "parentMessage": "지호가 이번 주에 조금 힘들어했습니다. 연립방정식 단원이 어렵게 느껴지는 것 같습니다. 하지만 일차방정식 기초는 탄탄하니 걱정 마세요. 이번 주말에 대입법 복습을 집중적으로 할 예정입니다. 가정에서도 격려 부탁드립니다.",
+        "studentMessage": "지호야, 어려운 단원을 만났지만 포기하지 말자! 선생님이랑 같이 천천히 하면 분명 할 수 있어. 다음 주에 같이 열심히 해보자!",
+        "teacherCommentDraft": "지호의 기초 실력은 갖춰져 있으니 조금 더 시간을 들여 개념을 정리하면 충분히 따라올 수 있습니다. 결석 없이 꾸준히 출석하는 것이 중요합니다.",
+        "generatedAt": "2025-01-19T11:00:00Z",
+        "modelInfo": {
+          "model": "gemini-3.0-pro",
+          "confidence": 0.88
+        }
+      },
+      "createdAt": "2025-01-19T11:00:00Z",
+      "updatedAt": "2025-01-19T11:00:00Z",
+      "createdBy": "TCH001"
+    }
+  ]
+}

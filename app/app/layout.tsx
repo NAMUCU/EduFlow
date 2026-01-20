@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { AuthProvider } from '@/contexts/AuthContext'
 
 export const metadata: Metadata = {
   title: 'EduFlow - 학원 관리 플랫폼',
@@ -13,7 +14,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
-      <body>{children}</body>
+      <body>
+        {/* 인증 상태 관리를 위한 Provider */}
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   )
 }

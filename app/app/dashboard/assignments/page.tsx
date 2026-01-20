@@ -1,96 +1,486 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import Header from '@/components/Header'
-import { Plus, Search, Filter, Send, Eye, MoreVertical, Clock, Users, CheckCircle, AlertCircle } from 'lucide-react'
+import { useState, useCallback, memo } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import Header from '@/components/Header';
+import {
+  Plus,
+  Search,
+  Filter,
+  Calendar,
+  Users,
+  FileText,
+  Clock,
+  ChevronRight,
+  MoreVertical,
+  Trash2,
+  Edit,
+  Eye,
+  CheckCircle,
+  AlertCircle,
+  RefreshCw,
+  Send,
+} from 'lucide-react';
+import dynamic from 'next/dynamic';
 
-// 목업 데이터
-const mockAssignments = [
+// bundle-dynamic-imports 규칙: 모달은 조건부 렌더링이므로 dynamic import
+const AssignmentCreator = dynamic(
+  () => import('@/components/AssignmentCreator'),
+  { ssr: false }
+);
+
+import {
+  AssignmentListItem,
+  AssignmentTab,
+  ASSIGNMENT_TAB_LABELS,
+  AssignmentFormState,
+  getRemainingTime,
+  formatDateTime,
+} from '@/types/assignment';
+import { Problem, Student, User } from '@/types/database';
+
+// client-swr-dedup 규칙: SWR 훅으로 과제 목록 캐싱
+import { useAssignmentsTeacher } from '@/hooks/useAssignmentsTeacher';
+
+// 탭 목록
+const TABS: AssignmentTab[] = ['in_progress', 'scheduled', 'completed'];
+
+// 샘플 문제 데이터 (API에서 가져올 예정)
+const MOCK_PROBLEMS: Problem[] = [
   {
-    id: 1,
-    title: '중2 이차방정식 테스트',
-    description: '근의 공식과 판별식 활용',
-    problemCount: 10,
-    targetStudents: 24,
-    submittedCount: 20,
-    dueDate: '2025-01-20',
-    createdAt: '2025-01-18',
-    status: 'active',
-    grade: '중2',
-  },
-  {
-    id: 2,
-    title: '중3 피타고라스 정리 복습',
-    description: '직각삼각형 응용 문제',
-    problemCount: 8,
-    targetStudents: 18,
-    submittedCount: 18,
-    dueDate: '2025-01-19',
-    createdAt: '2025-01-17',
-    status: 'completed',
-    grade: '중3',
-  },
-  {
-    id: 3,
-    title: '중1 일차방정식 기초',
-    description: '방정식의 풀이 기본',
-    problemCount: 12,
-    targetStudents: 23,
-    submittedCount: 19,
-    dueDate: '2025-01-18',
-    createdAt: '2025-01-16',
-    status: 'completed',
+    id: 'math-m1-unit1-001',
+    subject: '수학',
     grade: '중1',
+    unit: '정수와 유리수',
+    question: '다음 중 음수를 모두 고르시오.\n\n-5, 0, +3, -2.5, +7, -1/2',
+    answer: '-5, -2.5, -1/2',
+    solution: '음수는 0보다 작은 수입니다.',
+    difficulty: 'easy',
+    type: 'short_answer',
+    options: null,
+    image_url: null,
+    tags: ['음수', '정수'],
+    academy_id: 'academy-001',
+    created_by: 'teacher-001',
+    is_public: true,
+    ai_generated: false,
+    created_at: '2025-01-15T09:00:00Z',
+    updated_at: '2025-01-15T09:00:00Z',
   },
   {
-    id: 4,
-    title: '중2 연립방정식 심화',
-    description: '대입법과 가감법 활용',
-    problemCount: 10,
-    targetStudents: 24,
-    submittedCount: 0,
-    dueDate: '2025-01-25',
-    createdAt: '2025-01-20',
-    status: 'draft',
-    grade: '중2',
+    id: 'math-m1-unit1-002',
+    subject: '수학',
+    grade: '중1',
+    unit: '정수와 유리수',
+    question: '(-3) + (-7) - (-5)를 계산하시오.',
+    answer: '-5',
+    solution: '정수의 덧셈과 뺄셈 규칙을 적용합니다.',
+    difficulty: 'medium',
+    type: 'short_answer',
+    options: null,
+    image_url: null,
+    tags: ['정수', '계산'],
+    academy_id: 'academy-001',
+    created_by: 'teacher-001',
+    is_public: true,
+    ai_generated: false,
+    created_at: '2025-01-15T09:00:00Z',
+    updated_at: '2025-01-15T09:00:00Z',
   },
-]
+  {
+    id: 'math-m1-unit1-003',
+    subject: '수학',
+    grade: '중1',
+    unit: '정수와 유리수',
+    question: '어떤 잠수함이 해수면에서 출발하여 120m를 잠수한 후, 다시 45m를 상승했습니다.',
+    answer: '-75m',
+    solution: '해수면을 기준(0)으로 하여 아래를 음수로 표현합니다.',
+    difficulty: 'medium',
+    type: 'short_answer',
+    options: null,
+    image_url: null,
+    tags: ['실생활', '정수'],
+    academy_id: 'academy-001',
+    created_by: 'teacher-001',
+    is_public: true,
+    ai_generated: false,
+    created_at: '2025-01-15T09:00:00Z',
+    updated_at: '2025-01-15T09:00:00Z',
+  },
+];
+
+// 샘플 학생 데이터
+const MOCK_STUDENTS: (Student & { user: User })[] = [
+  {
+    id: 'student-001',
+    user_id: 'user-s001',
+    academy_id: 'academy-001',
+    grade: '중1',
+    parent_id: null,
+    school_name: '서울중학교',
+    class_name: 'A반',
+    memo: null,
+    created_at: '2025-01-01T00:00:00Z',
+    updated_at: '2025-01-01T00:00:00Z',
+    user: {
+      id: 'user-s001',
+      email: 'minjun@example.com',
+      name: '김민준',
+      role: 'student',
+      phone: null,
+      profile_image: null,
+      created_at: '2025-01-01T00:00:00Z',
+      updated_at: '2025-01-01T00:00:00Z',
+    },
+  },
+  {
+    id: 'student-002',
+    user_id: 'user-s002',
+    academy_id: 'academy-001',
+    grade: '중1',
+    parent_id: null,
+    school_name: '서울중학교',
+    class_name: 'A반',
+    memo: null,
+    created_at: '2025-01-01T00:00:00Z',
+    updated_at: '2025-01-01T00:00:00Z',
+    user: {
+      id: 'user-s002',
+      email: 'seoyeon@example.com',
+      name: '이서연',
+      role: 'student',
+      phone: null,
+      profile_image: null,
+      created_at: '2025-01-01T00:00:00Z',
+      updated_at: '2025-01-01T00:00:00Z',
+    },
+  },
+  {
+    id: 'student-003',
+    user_id: 'user-s003',
+    academy_id: 'academy-001',
+    grade: '중1',
+    parent_id: null,
+    school_name: '강남중학교',
+    class_name: 'A반',
+    memo: null,
+    created_at: '2025-01-01T00:00:00Z',
+    updated_at: '2025-01-01T00:00:00Z',
+    user: {
+      id: 'user-s003',
+      email: 'junhyuk@example.com',
+      name: '박준혁',
+      role: 'student',
+      phone: null,
+      profile_image: null,
+      created_at: '2025-01-01T00:00:00Z',
+      updated_at: '2025-01-01T00:00:00Z',
+    },
+  },
+  {
+    id: 'student-004',
+    user_id: 'user-s004',
+    academy_id: 'academy-001',
+    grade: '중1',
+    parent_id: null,
+    school_name: '강남중학교',
+    class_name: 'B반',
+    memo: null,
+    created_at: '2025-01-01T00:00:00Z',
+    updated_at: '2025-01-01T00:00:00Z',
+    user: {
+      id: 'user-s004',
+      email: 'sua@example.com',
+      name: '최수아',
+      role: 'student',
+      phone: null,
+      profile_image: null,
+      created_at: '2025-01-01T00:00:00Z',
+      updated_at: '2025-01-01T00:00:00Z',
+    },
+  },
+];
+
+// 샘플 반 데이터
+const MOCK_CLASSES = [
+  { id: 'class-001', name: '중1 A반', student_ids: ['student-001', 'student-002', 'student-003'] },
+  { id: 'class-002', name: '중1 B반', student_ids: ['student-004'] },
+];
+
+// ============================================
+// rerender-memo 규칙: 과제 카드 컴포넌트 메모이제이션
+// ============================================
+
+interface AssignmentCardProps {
+  assignment: AssignmentListItem;
+  openMenuId: string | null;
+  onMenuToggle: (id: string | null) => void;
+  onDelete: (id: string) => void;
+  onPreload: (id: string) => void;
+}
+
+const AssignmentCard = memo(function AssignmentCard({
+  assignment,
+  openMenuId,
+  onMenuToggle,
+  onDelete,
+  onPreload,
+}: AssignmentCardProps) {
+  const isMenuOpen = openMenuId === assignment.id;
+
+  // bundle-preload 규칙: hover 시 상세 페이지 프리로드
+  const handleMouseEnter = () => {
+    onPreload(assignment.id);
+  };
+
+  return (
+    <div
+      className="p-4 hover:bg-gray-50 transition-colors"
+      onMouseEnter={handleMouseEnter}
+    >
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <div className="flex items-center gap-3">
+            <Link
+              href={`/dashboard/assignments/${assignment.id}`}
+              className="text-lg font-medium text-gray-900 hover:text-primary-600"
+            >
+              {assignment.title}
+            </Link>
+            {/* rendering-conditional-render 규칙: 삼항 연산자 사용 */}
+            {assignment.status === 'completed' ? (
+              <span className="flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs">
+                <CheckCircle className="w-3 h-3" />
+                완료
+              </span>
+            ) : null}
+          </div>
+
+          {/* rendering-conditional-render 규칙: description 체크 */}
+          {assignment.description ? (
+            <p className="text-sm text-gray-500 mt-1 line-clamp-1">
+              {assignment.description}
+            </p>
+          ) : null}
+
+          <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+            <span className="flex items-center gap-1">
+              <FileText className="w-4 h-4" />
+              {assignment.problem_count}문제
+            </span>
+            <span className="flex items-center gap-1">
+              <Users className="w-4 h-4" />
+              {assignment.completed_count}/{assignment.student_count}명 완료
+            </span>
+            {/* rendering-conditional-render 규칙: due_date 체크 */}
+            {assignment.due_date ? (
+              <span className="flex items-center gap-1">
+                <Calendar className="w-4 h-4" />
+                {formatDateTime(assignment.due_date)}
+              </span>
+            ) : null}
+            {/* rendering-conditional-render 규칙: 조건부 렌더링 */}
+            {assignment.status === 'in_progress' && assignment.due_date ? (
+              <span
+                className={`flex items-center gap-1 ${
+                  getRemainingTime(assignment.due_date).includes('시간') ||
+                  getRemainingTime(assignment.due_date).includes('분')
+                    ? 'text-orange-600'
+                    : ''
+                }`}
+              >
+                <Clock className="w-4 h-4" />
+                {getRemainingTime(assignment.due_date)}
+              </span>
+            ) : null}
+          </div>
+
+          {/* 진행률 바 */}
+          <div className="mt-3">
+            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${
+                  assignment.student_count > 0 &&
+                  assignment.completed_count === assignment.student_count
+                    ? 'bg-green-500'
+                    : 'bg-primary-500'
+                }`}
+                style={{
+                  width: `${
+                    assignment.student_count > 0
+                      ? (assignment.completed_count / assignment.student_count) * 100
+                      : 0
+                  }%`,
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 ml-4">
+          <Link
+            href={`/dashboard/assignments/${assignment.id}`}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            onMouseEnter={handleMouseEnter}
+          >
+            <ChevronRight className="w-5 h-5 text-gray-400" />
+          </Link>
+
+          {/* 더보기 메뉴 */}
+          <div className="relative">
+            <button
+              onClick={() => onMenuToggle(isMenuOpen ? null : assignment.id)}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <MoreVertical className="w-5 h-5 text-gray-400" />
+            </button>
+
+            {/* rendering-conditional-render 규칙: 메뉴 표시 */}
+            {isMenuOpen ? (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => onMenuToggle(null)}
+                />
+                <div className="absolute right-0 top-full mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
+                  <Link
+                    href={`/dashboard/assignments/${assignment.id}`}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    onClick={() => onMenuToggle(null)}
+                  >
+                    <Eye className="w-4 h-4" />
+                    상세 보기
+                  </Link>
+                  <button
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 w-full"
+                    onClick={() => onMenuToggle(null)}
+                  >
+                    <Edit className="w-4 h-4" />
+                    수정
+                  </button>
+                  <button
+                    onClick={() => onDelete(assignment.id)}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    삭제
+                  </button>
+                </div>
+              </>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+// ============================================
+// 메인 페이지 컴포넌트
+// ============================================
 
 export default function AssignmentsPage() {
-  const [assignments] = useState(mockAssignments)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filterStatus, setFilterStatus] = useState('all')
-  const [showCreateModal, setShowCreateModal] = useState(false)
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<AssignmentTab>('in_progress');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isCreatorOpen, setIsCreatorOpen] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
-  const filteredAssignments = assignments.filter(assignment => {
-    const matchesSearch = assignment.title.includes(searchTerm) || assignment.description.includes(searchTerm)
-    const matchesFilter = filterStatus === 'all' || assignment.status === filterStatus
-    return matchesSearch && matchesFilter
-  })
+  // client-swr-dedup + async-parallel 규칙: SWR 훅으로 데이터 병렬 로딩
+  const {
+    assignments,
+    allAssignments,
+    tabCounts,
+    averageCompletionRate,
+    isLoading,
+    isValidating,
+    error,
+    refresh,
+    mutateFiltered,
+    mutateAll,
+  } = useAssignmentsTeacher({
+    filter: {
+      status: activeTab,
+      search: searchQuery,
+    },
+  });
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'active':
-        return <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">진행중</span>
-      case 'completed':
-        return <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">완료</span>
-      case 'draft':
-        return <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">임시저장</span>
-      default:
-        return null
+  // bundle-preload 규칙: 과제 상세 페이지 프리로드
+  const handlePreloadAssignment = useCallback((assignmentId: string) => {
+    if (typeof window !== 'undefined') {
+      // Next.js 상세 페이지 프리로드
+      router.prefetch(`/dashboard/assignments/${assignmentId}`);
     }
-  }
+  }, [router]);
 
-  const getSubmissionRate = (submitted: number, total: number) => {
-    const rate = (submitted / total) * 100
-    return rate
-  }
+  // 과제 생성
+  const handleCreateAssignment = async (formData: AssignmentFormState['data']) => {
+    const dueDateTime = formData.dueDate
+      ? `${formData.dueDate}T${formData.dueTime}:00Z`
+      : null;
+
+    const response = await fetch('/api/assignments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: formData.title,
+        description: formData.description,
+        problems: formData.selectedProblems.map((p) => p.id),
+        student_ids: formData.selectedStudents.map((s) => s.id),
+        due_date: dueDateTime,
+        time_limit: formData.timeLimit,
+        academy_id: 'academy-001',
+        teacher_id: 'teacher-001',
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.error);
+    }
+
+    // async-parallel 규칙: 목록 병렬 새로고침
+    await Promise.all([mutateFiltered(), mutateAll()]);
+  };
+
+  // 과제 삭제
+  const handleDeleteAssignment = async (id: string) => {
+    if (!confirm('이 과제를 삭제하시겠습니까? 학생들의 제출 내역도 함께 삭제됩니다.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/assignments/${id}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // async-parallel 규칙: 목록 병렬 새로고침
+        await Promise.all([mutateFiltered(), mutateAll()]);
+      } else {
+        alert(data.error || '과제 삭제에 실패했습니다.');
+      }
+    } catch {
+      alert('과제 삭제에 실패했습니다.');
+    }
+
+    setOpenMenuId(null);
+  };
+
+  // 메뉴 토글
+  const handleMenuToggle = useCallback((id: string | null) => {
+    setOpenMenuId(id);
+  }, []);
 
   return (
     <div>
       <Header
         title="과제 관리"
-        subtitle="문제지를 배포하고 제출 현황을 관리합니다"
+        subtitle="학생들에게 과제를 배정하고 진행 상황을 확인합니다"
       />
 
       <div className="p-8">
@@ -102,7 +492,7 @@ export default function AssignmentsPage() {
             </div>
             <div>
               <p className="text-sm text-gray-500">전체 과제</p>
-              <p className="text-2xl font-bold text-gray-900">{assignments.length}</p>
+              <p className="text-2xl font-bold text-gray-900">{allAssignments.length}</p>
             </div>
           </div>
           <div className="card flex items-center gap-4">
@@ -112,7 +502,7 @@ export default function AssignmentsPage() {
             <div>
               <p className="text-sm text-gray-500">진행중</p>
               <p className="text-2xl font-bold text-gray-900">
-                {assignments.filter(a => a.status === 'active').length}
+                {tabCounts.in_progress}
               </p>
             </div>
           </div>
@@ -123,7 +513,7 @@ export default function AssignmentsPage() {
             <div>
               <p className="text-sm text-gray-500">완료</p>
               <p className="text-2xl font-bold text-gray-900">
-                {assignments.filter(a => a.status === 'completed').length}
+                {tabCounts.completed}
               </p>
             </div>
           </div>
@@ -133,183 +523,126 @@ export default function AssignmentsPage() {
             </div>
             <div>
               <p className="text-sm text-gray-500">평균 제출률</p>
-              <p className="text-2xl font-bold text-gray-900">87%</p>
+              <p className="text-2xl font-bold text-gray-900">{averageCompletionRate}%</p>
             </div>
           </div>
         </div>
 
-        {/* 필터 및 검색 */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="과제 검색..."
-                className="pl-10 pr-4 py-2 w-80 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
+        {/* 탭 & 검색 */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6">
+          <div className="p-4 border-b flex items-center justify-between">
+            {/* 탭 */}
             <div className="flex gap-2">
-              {['all', 'active', 'completed', 'draft'].map((status) => (
+              {TABS.map((tab) => (
                 <button
-                  key={status}
-                  onClick={() => setFilterStatus(status)}
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    filterStatus === status
-                      ? 'bg-primary-500 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    activeTab === tab
+                      ? 'bg-primary-100 text-primary-700'
+                      : 'text-gray-500 hover:bg-gray-100'
                   }`}
                 >
-                  {status === 'all' ? '전체' : status === 'active' ? '진행중' : status === 'completed' ? '완료' : '임시저장'}
+                  {ASSIGNMENT_TAB_LABELS[tab]}
+                  <span className="ml-2 px-2 py-0.5 bg-gray-200 rounded-full text-xs">
+                    {tabCounts[tab]}
+                  </span>
                 </button>
               ))}
             </div>
-          </div>
 
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="btn-primary flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            새 과제 배포
-          </button>
-        </div>
-
-        {/* 과제 목록 */}
-        <div className="space-y-4">
-          {filteredAssignments.map((assignment) => (
-            <div key={assignment.id} className="card hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center">
-                    <span className="text-sm font-bold text-primary-600">{assignment.grade}</span>
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-bold text-gray-900">{assignment.title}</h3>
-                      {getStatusBadge(assignment.status)}
-                    </div>
-                    <p className="text-sm text-gray-500">{assignment.description}</p>
-                    <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
-                      <span>문제 {assignment.problemCount}개</span>
-                      <span>•</span>
-                      <span>마감: {assignment.dueDate}</span>
-                      <span>•</span>
-                      <span>생성: {assignment.createdAt}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-6">
-                  {/* 제출 현황 */}
-                  <div className="text-right">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Users className="w-4 h-4 text-gray-400" />
-                      <span className="font-bold text-gray-900">
-                        {assignment.submittedCount}/{assignment.targetStudents}
-                      </span>
-                      <span className="text-sm text-gray-500">명 제출</span>
-                    </div>
-                    <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${
-                          getSubmissionRate(assignment.submittedCount, assignment.targetStudents) === 100
-                            ? 'bg-green-500'
-                            : 'bg-primary-500'
-                        }`}
-                        style={{ width: `${getSubmissionRate(assignment.submittedCount, assignment.targetStudents)}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* 액션 버튼 */}
-                  <div className="flex items-center gap-2">
-                    <button className="btn-secondary flex items-center gap-2">
-                      <Eye className="w-4 h-4" />
-                      상세보기
-                    </button>
-                    {assignment.status === 'draft' && (
-                      <button className="btn-primary flex items-center gap-2">
-                        <Send className="w-4 h-4" />
-                        배포하기
-                      </button>
-                    )}
-                    <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                      <MoreVertical className="w-4 h-4 text-gray-400" />
-                    </button>
-                  </div>
-                </div>
+            {/* 검색 & 필터 & 새 과제 버튼 */}
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="과제 검색..."
+                  className="pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 w-64"
+                />
               </div>
-            </div>
-          ))}
-        </div>
-
-        {/* 과제 생성 모달 */}
-        {showCreateModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-2xl w-full max-w-lg p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">새 과제 배포</h3>
-              <form className="space-y-4">
-                <div>
-                  <label className="label">과제 제목</label>
-                  <input type="text" className="input" placeholder="예: 중2 이차방정식 테스트" />
-                </div>
-                <div>
-                  <label className="label">설명</label>
-                  <textarea className="input min-h-[80px]" placeholder="과제에 대한 간단한 설명..." />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="label">대상 학년</label>
-                    <select className="input">
-                      <option>중1</option>
-                      <option>중2</option>
-                      <option>중3</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="label">마감일</label>
-                    <input type="date" className="input" />
-                  </div>
-                </div>
-                <div>
-                  <label className="label">문제지 선택</label>
-                  <select className="input">
-                    <option>저장된 문제지에서 선택...</option>
-                    <option>중2 이차방정식 기본 (10문제)</option>
-                    <option>중2 이차방정식 심화 (8문제)</option>
-                    <option>중3 피타고라스 정리 (12문제)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="label">배포 대상</label>
-                  <div className="p-3 bg-gray-50 rounded-lg text-sm text-gray-600">
-                    중2 전체 (24명) 선택됨
-                  </div>
-                </div>
-                <div className="flex gap-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateModal(false)}
-                    className="flex-1 btn-secondary"
-                  >
-                    취소
-                  </button>
-                  <button type="button" className="flex-1 btn-ghost">
-                    임시저장
-                  </button>
-                  <button type="submit" className="flex-1 btn-primary flex items-center justify-center gap-2">
-                    <Send className="w-4 h-4" />
-                    배포하기
-                  </button>
-                </div>
-              </form>
+              <button className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50">
+                <Filter className="w-4 h-4 text-gray-500" />
+              </button>
+              <button
+                onClick={refresh}
+                className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50"
+              >
+                <RefreshCw className={`w-4 h-4 text-gray-500 ${isValidating ? 'animate-spin' : ''}`} />
+              </button>
+              <button
+                onClick={() => setIsCreatorOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                <span>새 과제 배포</span>
+              </button>
             </div>
           </div>
-        )}
+
+          {/* 과제 목록 - rendering-conditional-render 규칙: 삼항 연산자 사용 */}
+          <div className="divide-y">
+            {isLoading ? (
+              <div className="p-8 text-center">
+                <div className="w-8 h-8 border-2 border-primary-500/30 border-t-primary-500 rounded-full animate-spin mx-auto mb-3" />
+                <p className="text-gray-500">과제를 불러오는 중...</p>
+              </div>
+            ) : error ? (
+              <div className="p-8 text-center">
+                <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-3" />
+                <p className="text-red-500">{error}</p>
+                <button
+                  onClick={refresh}
+                  className="mt-4 px-4 py-2 text-sm text-primary-600 hover:underline"
+                >
+                  다시 시도
+                </button>
+              </div>
+            ) : assignments.length === 0 ? (
+              <div className="p-8 text-center">
+                <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500 mb-2">
+                  {activeTab === 'in_progress'
+                    ? '진행 중인 과제가 없습니다.'
+                    : activeTab === 'scheduled'
+                    ? '예정된 과제가 없습니다.'
+                    : '완료된 과제가 없습니다.'}
+                </p>
+                <button
+                  onClick={() => setIsCreatorOpen(true)}
+                  className="text-primary-600 hover:underline text-sm"
+                >
+                  새 과제 만들기
+                </button>
+              </div>
+            ) : (
+              // rerender-memo 규칙: 메모이제이션된 카드 컴포넌트 사용
+              assignments.map((assignment) => (
+                <AssignmentCard
+                  key={assignment.id}
+                  assignment={assignment}
+                  openMenuId={openMenuId}
+                  onMenuToggle={handleMenuToggle}
+                  onDelete={handleDeleteAssignment}
+                  onPreload={handlePreloadAssignment}
+                />
+              ))
+            )}
+          </div>
+        </div>
       </div>
+
+      {/* 과제 생성 모달 */}
+      <AssignmentCreator
+        isOpen={isCreatorOpen}
+        onClose={() => setIsCreatorOpen(false)}
+        onSubmit={handleCreateAssignment}
+        availableProblems={MOCK_PROBLEMS}
+        availableStudents={MOCK_STUDENTS}
+        availableClasses={MOCK_CLASSES}
+      />
     </div>
-  )
+  );
 }
