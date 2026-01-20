@@ -43,7 +43,7 @@
   --chart-3: 280 65% 48%;
   --chart-4: 43 96% 56%;
   --chart-5: 27 87% 60%;
-  --font-sans: Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: Menlo, monospace;
   --radius: .5rem;
