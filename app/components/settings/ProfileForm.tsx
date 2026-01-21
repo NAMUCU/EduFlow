@@ -118,6 +118,7 @@ export default function ProfileForm({ initialData, onSave }: ProfileFormProps) {
             className="relative w-24 h-24 rounded-full overflow-hidden cursor-pointer group"
           >
             {formData.profileImage ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={formData.profileImage}
                 alt="프로필"

@@ -54,6 +54,8 @@ export default function SavedProblemsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [showFilterPanel, setShowFilterPanel] = useState(false)
   const [filter, setFilter] = useState<ProblemFilter>({})
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
 
   // 페이지네이션 상태
   const [pagination, setPagination] = useState({
@@ -88,6 +90,8 @@ export default function SavedProblemsPage() {
       if (filter.type) params.set('type', filter.type)
       if (filter.aiGenerated !== undefined) params.set('aiGenerated', String(filter.aiGenerated))
       if (searchTerm) params.set('search', searchTerm)
+      if (dateFrom) params.set('dateFrom', dateFrom)
+      if (dateTo) params.set('dateTo', dateTo)
 
       // 페이지네이션
       params.set('page', String(pagination.page))
@@ -115,7 +119,7 @@ export default function SavedProblemsPage() {
     } finally {
       setLoading(false)
     }
-  }, [filter, searchTerm, pagination.page, pagination.limit])
+  }, [filter, searchTerm, dateFrom, dateTo, pagination.page, pagination.limit])
 
   // 초기 로드 및 필터 변경 시 재조회
   useEffect(() => {
@@ -155,6 +159,8 @@ export default function SavedProblemsPage() {
   const resetFilters = () => {
     setFilter({})
     setSearchTerm('')
+    setDateFrom('')
+    setDateTo('')
     setPagination(prev => ({ ...prev, page: 1 }))
   }
 
@@ -316,6 +322,32 @@ export default function SavedProblemsPage() {
                   <option value="true_false">O/X</option>
                   <option value="essay">서술형</option>
                 </select>
+              </div>
+            </div>
+            {/* 날짜 범위 필터 */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t border-gray-100">
+              <div>
+                <label className="label">시작일</label>
+                <input
+                  type="date"
+                  className="input"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="label">종료일</label>
+                <input
+                  type="date"
+                  className="input"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                />
+              </div>
+              <div className="col-span-2 flex items-end">
+                <p className="text-xs text-gray-400">
+                  생성일자 기준으로 문제를 필터링합니다
+                </p>
               </div>
             </div>
           </div>

@@ -136,6 +136,72 @@ export async function GET(request: NextRequest) {
 }
 
 /**
+ * PATCH /api/notifications
+ * 여러 알림을 일괄 읽음 처리합니다.
+ *
+ * Request Body:
+ * - ids: string[] (알림 ID 배열)
+ * - isRead: boolean (읽음 상태)
+ */
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { ids, isRead } = body;
+
+    // 필수 필드 검증
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json(
+        { success: false, error: '알림 ID 배열이 필요합니다.' },
+        { status: 400 }
+      );
+    }
+
+    if (typeof isRead !== 'boolean') {
+      return NextResponse.json(
+        { success: false, error: '읽음 상태(isRead)는 boolean 타입이어야 합니다.' },
+        { status: 400 }
+      );
+    }
+
+    // 데이터 로드
+    const data = await readNotificationsData();
+    const now = new Date().toISOString();
+    let updatedCount = 0;
+
+    // 일괄 업데이트
+    data.notifications = data.notifications.map((notification) => {
+      if (ids.includes(notification.id)) {
+        updatedCount++;
+        return {
+          ...notification,
+          isRead,
+          readAt: isRead ? now : undefined,
+        };
+      }
+      return notification;
+    });
+
+    // 파일에 저장
+    await writeNotificationsData(data);
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        updatedCount,
+        ids,
+      },
+      message: `${updatedCount}개의 알림이 업데이트되었습니다.`,
+    });
+  } catch (error) {
+    console.error('알림 일괄 업데이트 오류:', error);
+    return NextResponse.json(
+      { success: false, error: '알림을 업데이트하는 중 오류가 발생했습니다.' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
  * POST /api/notifications
  * 새 알림을 생성합니다.
  *

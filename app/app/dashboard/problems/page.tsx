@@ -1,20 +1,21 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Header from '@/components/Header'
 import dynamic from 'next/dynamic'
 
 // bundle-dynamic-imports 규칙: AI 검수 패널은 조건부 렌더링이므로 lazy load
 const ProblemReview = dynamic(
-  () => import('@/components/ProblemReview'),
+  () => import('@/components/problems/ProblemReview'),
   {
     loading: () => <div className="bg-gray-50 rounded-xl p-4 text-gray-500 text-center">검수 패널 로딩 중...</div>,
     ssr: false
   }
 )
-import { Sparkles, RefreshCw, Check, X, Edit3, Copy, Download, ChevronDown, AlertCircle, BookOpen, FileQuestion, Tag, Plus, Trash2, Settings2, Shield } from 'lucide-react'
+import { Sparkles, RefreshCw, Check, X, Edit3, Copy, Download, ChevronDown, AlertCircle, BookOpen, FileQuestion, Tag, Plus, Trash2, Settings2, Shield, Zap } from 'lucide-react'
 import curriculumData from '@/data/curriculum.json'
 import { ProblemReviewSummary } from '@/types/review'
+import { ScoreBadge, StatusBadge, IssueCountBadge, ReviewStatus } from '@/components/problems/ReviewBadge'
 
 interface Problem {
   id: number
@@ -100,6 +101,10 @@ export default function ProblemsPage() {
   // 검수 관련 상태
   const [showReview, setShowReview] = useState(false)
   const [reviewSummaries, setReviewSummaries] = useState<ProblemReviewSummary[]>([])
+  // 자동 검수 설정
+  const [autoReview, setAutoReview] = useState(false)
+  // 일괄 검수 진행 상태
+  const [isBatchReviewing, setIsBatchReviewing] = useState(false)
 
   // 현재 선택된 단원의 커리큘럼 정보
   const getCurrentCurriculum = () => {
@@ -173,6 +178,11 @@ export default function ProblemsPage() {
       setGeneratedProblems(data.problems)
       setSelectedProblems(data.problems.map((p: Problem) => p.id))
       setStep('result')
+
+      // 자동 검수가 활성화되어 있으면 검수 패널 표시
+      if (autoReview) {
+        setShowReview(true)
+      }
     } catch (err: any) {
       console.error('문제 생성 에러:', err)
       setError(err.message || '문제 생성 중 오류가 발생했습니다')
@@ -192,7 +202,7 @@ export default function ProblemsPage() {
   }
 
   // 수정 제안 적용 핸들러
-  const handleApplyCorrection = (
+  const handleApplyCorrection = useCallback((
     problemId: number,
     correctedAnswer?: string,
     correctedSolution?: string
@@ -209,7 +219,58 @@ export default function ProblemsPage() {
         return problem
       })
     )
-  }
+  }, [])
+
+  // 일괄 검수 핸들러
+  const handleBatchReview = useCallback(async () => {
+    if (generatedProblems.length === 0) return
+
+    setIsBatchReviewing(true)
+    setShowReview(true)
+  }, [generatedProblems.length])
+
+  // 문제별 검수 상태 가져오기
+  const getReviewStatusForProblem = useCallback((problemId: number): {
+    status: ReviewStatus
+    score?: number
+    errors?: number
+    warnings?: number
+    suggestions?: number
+  } => {
+    const summary = reviewSummaries.find(s => s.problemId === problemId)
+    if (!summary) {
+      return { status: 'pending' }
+    }
+
+    // 이슈 분류
+    const categorizeIssue = (issue: string): 'error' | 'warning' | 'suggestion' => {
+      const lower = issue.toLowerCase()
+      if (lower.includes('오류') || lower.includes('틀') || lower.includes('잘못')) {
+        return 'error'
+      }
+      if (lower.includes('주의') || lower.includes('확인')) {
+        return 'warning'
+      }
+      return 'suggestion'
+    }
+
+    const errors = summary.consensusIssues.filter(i => categorizeIssue(i) === 'error').length
+    const warnings = summary.consensusIssues.filter(i => categorizeIssue(i) === 'warning').length
+    const suggestions = summary.consensusSuggestions.length
+
+    let status: ReviewStatus = 'completed'
+    if (summary.averageAccuracy < 60 || errors > 0) {
+      status = 'needs_revision'
+    }
+
+    return {
+      status,
+      score: summary.averageAccuracy,
+      errors,
+      warnings,
+      suggestions,
+    }
+  }, [reviewSummaries])
 
   // 현재 과목/학년 가져오기
   const currentSubject = mode === 'unit' ? config.subject : mockExamConfig.subject
@@ -572,6 +633,29 @@ export default function ProblemsPage() {
                 )}
               </div>
 
+              {/* 자동 검수 설정 */}
+              <div className="mt-6 pt-6 border-t border-gray-100">
+                <div className="flex items-center justify-between p-4 bg-purple-50 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <Shield className="w-5 h-5 text-purple-600" />
+                    <div>
+                      <p className="font-medium text-gray-900">자동 AI 검수</p>
+                      <p className="text-sm text-gray-500">문제 생성 후 자동으로 검수합니다</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setAutoReview(!autoReview)}
+                    className={`w-12 h-6 rounded-full transition-all ${
+                      autoReview ? 'bg-purple-500' : 'bg-gray-300'
+                    }`}
+                  >
+                    <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                      autoReview ? 'translate-x-6' : 'translate-x-0.5'
+                    }`} />
+                  </button>
+                </div>
+              </div>
+
               {/* 생성 버튼 */}
               <button
                 onClick={handleGenerate}
@@ -651,15 +735,16 @@ export default function ProblemsPage() {
                     다시 생성
                   </button>
                   <button
-                    onClick={() => setShowReview(!showReview)}
+                    onClick={handleBatchReview}
+                    disabled={isBatchReviewing}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
                       showReview
                         ? 'bg-purple-600 text-white'
                         : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                    }`}
+                    } ${isBatchReviewing ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     <Shield className="w-4 h-4" />
-                    AI 검수
+                    {reviewSummaries.length > 0 ? '검수 결과' : '일괄 검수'}
                   </button>
                   <button className="btn-primary flex items-center gap-2">
                     <Download className="w-4 h-4" />
@@ -717,21 +802,22 @@ export default function ProblemsPage() {
                                 {problem.unit}
                               </span>
                             )}
-                            {/* 검수 결과 배지 */}
-                            {reviewSummary && (
-                              <span
-                                className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${
-                                  reviewSummary.averageAccuracy >= 90
-                                    ? 'bg-green-100 text-green-700'
-                                    : reviewSummary.averageAccuracy >= 70
-                                    ? 'bg-yellow-100 text-yellow-700'
-                                    : 'bg-red-100 text-red-700'
-                                }`}
-                              >
-                                <Shield className="w-3 h-3" />
-                                검수 {reviewSummary.averageAccuracy}%
-                              </span>
-                            )}
+                            {/* 검수 결과 배지 - 개선된 UI */}
+                            {reviewSummary ? (
+                              <div className="flex items-center gap-1">
+                                <ScoreBadge score={reviewSummary.averageAccuracy} size="sm" showIcon={false} />
+                                {(getReviewStatusForProblem(problem.id).errors || 0) > 0 ||
+                                 (getReviewStatusForProblem(problem.id).warnings || 0) > 0 ||
+                                 (getReviewStatusForProblem(problem.id).suggestions || 0) > 0 ? (
+                                  <IssueCountBadge
+                                    errors={getReviewStatusForProblem(problem.id).errors}
+                                    warnings={getReviewStatusForProblem(problem.id).warnings}
+                                    suggestions={getReviewStatusForProblem(problem.id).suggestions}
+                                    size="sm"
+                                  />
+                                ) : null}
+                              </div>
+                            ) : null}
                           </div>
                           <p className="text-gray-900 font-medium mb-4">{problem.question}</p>
 
@@ -752,19 +838,109 @@ export default function ProblemsPage() {
                             </div>
                           </details>
 
-                          {/* 검수 결과 표시 - rendering-conditional-render 규칙: 삼항 연산자 사용 */}
+                          {/* 검수 결과 표시 - 개선된 오류/경고/제안 분류 */}
                           {reviewSummary?.consensusIssues && reviewSummary.consensusIssues.length > 0 ? (
-                            <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                              <p className="text-sm font-medium text-orange-700 mb-1">
-                                발견된 문제점:
-                              </p>
-                              <ul className="text-sm text-orange-600 list-disc list-inside">
-                                {reviewSummary.consensusIssues.map((issue, i) => (
-                                  <li key={i}>{issue}</li>
-                                ))}
-                              </ul>
+                            <div className="mt-3 space-y-2">
+                              {/* 오류 */}
+                              {reviewSummary.consensusIssues.filter(i =>
+                                i.toLowerCase().includes('오류') ||
+                                i.toLowerCase().includes('틀') ||
+                                i.toLowerCase().includes('잘못')
+                              ).length > 0 && (
+                                <div className="p-2 bg-red-50 border border-red-200 rounded-lg">
+                                  <p className="text-xs font-medium text-red-700 flex items-center gap-1 mb-1">
+                                    <AlertCircle className="w-3 h-3" />
+                                    오류
+                                  </p>
+                                  <ul className="text-sm text-red-600">
+                                    {reviewSummary.consensusIssues
+                                      .filter(i =>
+                                        i.toLowerCase().includes('오류') ||
+                                        i.toLowerCase().includes('틀') ||
+                                        i.toLowerCase().includes('잘못')
+                                      )
+                                      .map((issue, i) => (
+                                        <li key={i}>{issue}</li>
+                                      ))}
+                                  </ul>
+                                </div>
+                              )}
+                              {/* 경고 */}
+                              {reviewSummary.consensusIssues.filter(i =>
+                                i.toLowerCase().includes('주의') ||
+                                i.toLowerCase().includes('확인')
+                              ).length > 0 && (
+                                <div className="p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                  <p className="text-xs font-medium text-yellow-700 flex items-center gap-1 mb-1">
+                                    <AlertCircle className="w-3 h-3" />
+                                    경고
+                                  </p>
+                                  <ul className="text-sm text-yellow-600">
+                                    {reviewSummary.consensusIssues
+                                      .filter(i =>
+                                        i.toLowerCase().includes('주의') ||
+                                        i.toLowerCase().includes('확인')
+                                      )
+                                      .map((issue, i) => (
+                                        <li key={i}>{issue}</li>
+                                      ))}
+                                  </ul>
+                                </div>
+                              )}
+                              {/* 제안 */}
+                              {reviewSummary.consensusIssues.filter(i =>
+                                !i.toLowerCase().includes('오류') &&
+                                !i.toLowerCase().includes('틀') &&
+                                !i.toLowerCase().includes('잘못') &&
+                                !i.toLowerCase().includes('주의') &&
+                                !i.toLowerCase().includes('확인')
+                              ).length > 0 && (
+                                <div className="p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                                  <p className="text-xs font-medium text-blue-700 flex items-center gap-1 mb-1">
+                                    <Zap className="w-3 h-3" />
+                                    제안
+                                  </p>
+                                  <ul className="text-sm text-blue-600">
+                                    {reviewSummary.consensusIssues
+                                      .filter(i =>
+                                        !i.toLowerCase().includes('오류') &&
+                                        !i.toLowerCase().includes('틀') &&
+                                        !i.toLowerCase().includes('잘못') &&
+                                        !i.toLowerCase().includes('주의') &&
+                                        !i.toLowerCase().includes('확인')
+                                      )
+                                      .map((issue, i) => (
+                                        <li key={i}>{issue}</li>
+                                      ))}
+                                  </ul>
+                                </div>
+                              )}
                             </div>
                           ) : null}
+
+                          {/* 수정 제안 적용 버튼 */}
+                          {reviewSummary?.reviews?.some(r => r.correctedAnswer || r.correctedSolution) && (
+                            <div className="mt-3">
+                              <button
+                                onClick={() => {
+                                  const bestReview = reviewSummary.reviews
+                                    .filter(r => r.correctedAnswer || r.correctedSolution)
+                                    .sort((a, b) => b.accuracy - a.accuracy)[0]
+                                  if (bestReview) {
+                                    handleApplyCorrection(
+                                      problem.id,
+                                      bestReview.correctedAnswer,
+                                      bestReview.correctedSolution
+                                    )
+                                  }
+                                }}
+                                className="text-sm px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors flex items-center gap-1"
+                              >
+                                <Check className="w-3 h-3" />
+                                수정 제안 적용
+                              </button>
+                            </div>
+                          )}
                         </div>
 
                         <div className="flex gap-2">
@@ -793,7 +969,11 @@ export default function ProblemsPage() {
                     problems={generatedProblems}
                     subject={currentSubject}
                     grade={currentGrade}
-                    onReviewComplete={handleReviewComplete}
+                    autoReview={autoReview}
+                    onReviewComplete={(summaries) => {
+                      handleReviewComplete(summaries)
+                      setIsBatchReviewing(false)
+                    }}
                     onApplyCorrection={handleApplyCorrection}
                   />
                 </div>

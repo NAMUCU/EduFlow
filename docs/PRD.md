@@ -53,9 +53,9 @@
 - 학생에게 문자 발송 (문제 링크 + 학생 ID 입력)
 - 학생 ID로 응답 매칭
 
-#### F3. 풀이 제출 및 OCR 분석
+#### F3. 풀이 제출 및 AI 분석
 - 학생: 손글씨 풀이 사진 업로드
-- Google Cloud Vision OCR로 텍스트 추출
+- Claude Sonnet 4.5로 이미지 인식 + 풀이 과정 분석 + 정리 (한번에 처리)
 - PDF 변환 (PDF.co) 후 저장
 
 ### Phase 2: 분석 및 피드백 시스템
@@ -79,8 +79,9 @@
 
 #### F7. 기출/교과서 검색 (RAG)
 - **용도**: 강사가 필요할 때 기출 문제, 교과서 내용, 수능/모의고사 검색
-- **기술**: OpenAI Files Search API
+- **기술**: Gemini File Search API
 - **데이터**: 주요 문제집, 교과서, 수능/모의고사
+- **전처리**: PDF → 마크다운 변환 (표/수식 최적화), 스캔 PDF는 Vision 처리
 - **UI**: 별도 검색 탭에서 키워드/단원으로 검색 → 결과 열람
 
 ---
@@ -93,25 +94,36 @@
 | Backend | Next.js API Routes + Supabase |
 | DB/Storage/Auth | Supabase |
 | 문자 발송 | Tally |
-| OCR | Google Cloud Vision |
-| PDF 변환 | PDF.co |
-| 문제 생성 | Gemini 3.0 Pro |
+| OCR + 풀이 분석 + 교육자료 인식 | Claude Vision (이미지 인식 + 분석 + 정리 통합) |
+| PDF 변환 | PDF.co + @react-pdf/renderer |
+| 문제 생성 | Claude API (Anthropic SDK) |
 | 문제 검수 | Gemini / ChatGPT / Claude (멀티 셀렉트) |
-| RAG | OpenAI Files Search API |
+| RAG | Gemini File Search API |
+| 수식 렌더링 | KaTeX + react-katex |
+| 기하 도형 시각화 | JSXGraph |
+| 함수 그래프 시각화 | function-plot |
+| 스키마 검증 | Zod |
 
 ---
 
 ## 📊 데이터 모델 (핵심 엔티티)
 ```
 [academies] 학원 정보
+[profiles] 사용자 프로필 (Supabase Auth 연동)
 [teachers] 강사 정보
 [students] 학생 정보
+[classes] 반 정보
+[class_students] 반-학생 연결
 [schools] 학교 정보 (지역/학교별 맥락)
-[problems] 문제 (생성된 문제 + 메타데이터)
-[problem_sets] 문제지 (문제 묶음)
+[problems] 문제 (생성된 문제 + 메타데이터 + Few-shot 샘플)
+[problem_sets] 문제 세트 (과제/수업/시험별 문제 묶음)
+[problem_set_items] 문제 세트-문제 연결
 [assignments] 배포된 과제
-[submissions] 학생 제출물
-[analyses] 분석 결과
+[assignment_submissions] 학생 제출물
+[attendance] 출석 기록
+[consultations] 상담 기록
+[notices] 공지사항
+[grades] 성적 기록
 [reports] 학습 보고서
 ```
 

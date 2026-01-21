@@ -195,6 +195,7 @@ export default function AcademyForm({ initialData, onSave }: AcademyFormProps) {
             className="relative w-24 h-24 rounded-xl border-2 border-dashed border-gray-300 overflow-hidden cursor-pointer group hover:border-primary-500 transition-colors"
           >
             {formData.logoImage ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={formData.logoImage}
                 alt="학원 로고"

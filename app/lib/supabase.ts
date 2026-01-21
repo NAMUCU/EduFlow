@@ -12,8 +12,43 @@ import { Database } from '@/types/database'
 
 // 환경 변수에서 Supabase 연결 정보를 가져옵니다
 // NEXT_PUBLIC_ 접두사가 붙은 환경변수는 브라우저에서도 접근 가능합니다
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+
+// Placeholder 체크 (빌드 시 실제 Supabase 없이도 동작하도록)
+const isPlaceholder = !supabaseUrl || supabaseUrl.includes('placeholder')
+
+/**
+ * Mock Supabase 클라이언트 (Placeholder용)
+ * 실제 Supabase가 연결되지 않은 상태에서 빌드가 가능하도록 함
+ */
+const createMockClient = () => {
+  const mockQuery = () => ({
+    select: () => mockQuery(),
+    insert: () => mockQuery(),
+    update: () => mockQuery(),
+    delete: () => mockQuery(),
+    eq: () => mockQuery(),
+    single: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } }),
+    then: (resolve: (value: { data: null; error: { message: string } }) => void) =>
+      resolve({ data: null, error: { message: 'Supabase not configured' } }),
+  })
+
+  return {
+    from: () => mockQuery(),
+    auth: {
+      getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+      signIn: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } }),
+      signOut: () => Promise.resolve({ error: null }),
+    },
+    storage: {
+      from: () => ({
+        upload: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } }),
+        getPublicUrl: () => ({ data: { publicUrl: '' } }),
+      }),
+    },
+  } as unknown as ReturnType<typeof createClient<Database>>
+}
 
 /**
  * 브라우저(클라이언트) 컴포넌트용 Supabase 클라이언트
@@ -26,7 +61,9 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
  * import { supabase } from '@/lib/supabase'
  * const { data } = await supabase.from('users').select('*')
  */
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
+export const supabase = isPlaceholder
+  ? createMockClient()
+  : createClient<Database>(supabaseUrl, supabaseAnonKey)
 
 /**
  * 서버 컴포넌트/API 라우트용 Supabase 클라이언트 생성 함수
@@ -46,6 +83,10 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
  * const { data } = await supabase.from('users').select('*')
  */
 export function createServerSupabaseClient() {
+  if (isPlaceholder) {
+    return createMockClient()
+  }
+
   return createClient<Database>(supabaseUrl, supabaseAnonKey, {
     auth: {
       // 서버에서는 세션을 자동으로 저장하지 않습니다
@@ -68,6 +109,10 @@ export function createServerSupabaseClient() {
  * (이 키는 절대 클라이언트에 노출되면 안 됩니다!)
  */
 export function createAdminSupabaseClient() {
+  if (isPlaceholder) {
+    return createMockClient()
+  }
+
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!serviceRoleKey) {
@@ -81,4 +126,11 @@ export function createAdminSupabaseClient() {
       detectSessionInUrl: false,
     },
   })
+}
+
+/**
+ * Supabase 연결 상태 확인
+ */
+export function isSupabaseConfigured(): boolean {
+  return !isPlaceholder
 }

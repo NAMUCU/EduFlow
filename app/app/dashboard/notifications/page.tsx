@@ -143,14 +143,15 @@ const Pagination = memo(function Pagination({
   isLoading,
   onPageChange,
 }: PaginationProps) {
-  if (totalPages <= 1) return null;
-
-  // 표시할 페이지 번호 계산
+  // 표시할 페이지 번호 계산 (useMemo를 조건문 이전에 호출)
   const pageNumbers = useMemo(() => {
+    if (totalPages <= 1) return [];
     return Array.from({ length: totalPages }, (_, i) => i + 1).filter((p) => {
       return Math.abs(p - page) <= 2 || p === 1 || p === totalPages;
     });
   }, [totalPages, page]);
+
+  if (totalPages <= 1) return null;
 
   return (
     <div className="flex items-center justify-center gap-2 mt-6">

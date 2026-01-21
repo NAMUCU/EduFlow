@@ -1,5 +1,15 @@
 'use client';
 
+/**
+ * 학생 문제 풀이 페이지
+ *
+ * 개선된 기능:
+ * - 풀이 사진 촬영/업로드
+ * - 이미지 미리보기
+ * - 제출 전 확인 (미리보기 모달)
+ * - 문제 유형별 답안 입력 UI
+ */
+
 import { useState, useCallback, useEffect, memo } from 'react';
 import dynamic from 'next/dynamic';
 import {
@@ -16,18 +26,21 @@ import {
   ArrowRight,
   Lightbulb,
   Camera,
-  Image as ImageIcon,
   Loader2,
   Trophy,
   RefreshCw,
   X,
+  Eye,
+  FileText,
+  Image as ImageIcon,
+  Check,
 } from 'lucide-react';
 import { useAssignments, StudentAssignmentItem } from '@/hooks/useAssignments';
 import useSubmission, { ProblemInfo } from '@/hooks/useSubmission';
 import { useAuth } from '@/hooks/useAuth';
 
-// bundle-dynamic-imports: ImageUploader lazy load
-const ImageUploader = dynamic(() => import('@/components/ImageUploader'), {
+// Lazy load 컴포넌트
+const SolutionUploader = dynamic(() => import('@/components/student/SolutionUploader'), {
   loading: () => (
     <div className="flex items-center justify-center p-8 border-2 border-dashed rounded-xl">
       <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
@@ -36,7 +49,7 @@ const ImageUploader = dynamic(() => import('@/components/ImageUploader'), {
   ssr: false,
 });
 
-const OcrResult = dynamic(() => import('@/components/OcrResult'), {
+const AnswerInput = dynamic(() => import('@/components/student/AnswerInput'), {
   loading: () => <div className="animate-pulse bg-gray-100 rounded-xl h-32" />,
   ssr: false,
 });
@@ -79,6 +92,13 @@ const UI_TEXT = {
   correct: '정답',
   incorrect: '오답',
   pending: '채점 대기',
+  previewSubmission: '제출 미리보기',
+  confirmSubmit: '제출 확인',
+  answeredCount: '답변한 문제',
+  unansweredCount: '미답변 문제',
+  cancel: '취소',
+  submit: '제출하기',
+  backToList: '목록으로',
 };
 
 // 상태 설정
@@ -123,19 +143,25 @@ const subjectColors: { [key: string]: string } = {
   기타: 'bg-gray-100 text-gray-700',
 };
 
-// rerender-memo: 문제 카드 컴포넌트 메모이제이션
+// 문제 카드 컴포넌트 (개선된 버전)
 const ProblemCard = memo(function ProblemCard({
   problem,
   currentAnswer,
-  onSelectChoice,
-  onInputAnswer,
+  onAnswer,
+  onImageUpload,
   showHint,
+  isGraded,
+  isCorrect,
+  correctAnswer,
 }: {
   problem: ProblemInfo;
-  currentAnswer: string | undefined;
-  onSelectChoice: (choiceId: number) => void;
-  onInputAnswer: (text: string) => void;
+  currentAnswer?: { answer: string; imageUrl?: string };
+  onAnswer: (answer: string, imageUrl?: string) => void;
+  onImageUpload?: (base64: string) => Promise<{ success: boolean; url?: string; ocrText?: string; error?: string }>;
   showHint: boolean;
+  isGraded?: boolean;
+  isCorrect?: boolean | null;
+  correctAnswer?: string;
 }) {
   const getTypeLabel = () => {
     switch (problem.type) {
@@ -150,90 +176,80 @@ const ProblemCard = memo(function ProblemCard({
     }
   };
 
+  const getTypeColor = () => {
+    switch (problem.type) {
+      case 'multiple_choice':
+        return 'bg-blue-50 text-blue-600';
+      case 'short_answer':
+        return 'bg-green-50 text-green-600';
+      case 'essay':
+        return 'bg-purple-50 text-purple-600';
+      default:
+        return 'bg-gray-100 text-gray-600';
+    }
+  };
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+      {/* 문제 헤더 */}
       <div className="flex items-center gap-2 mb-4">
-        <span className="flex items-center justify-center w-8 h-8 bg-blue-600 text-white rounded-lg font-bold text-sm">
+        <span className="flex items-center justify-center w-10 h-10 bg-blue-600 text-white rounded-xl font-bold">
           {problem.number}
         </span>
-        <span className="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-600 rounded">
+        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${getTypeColor()}`}>
           {getTypeLabel()}
         </span>
-        <span className="text-xs font-medium px-2 py-1 bg-blue-50 text-blue-600 rounded">
+        <span className="text-xs font-medium px-2.5 py-1 bg-yellow-50 text-yellow-700 rounded-full">
           {problem.points}점
         </span>
+        {isGraded && (
+          <span
+            className={`text-xs font-medium px-2.5 py-1 rounded-full ml-auto ${
+              isCorrect
+                ? 'bg-green-100 text-green-700'
+                : isCorrect === false
+                ? 'bg-red-100 text-red-700'
+                : 'bg-yellow-100 text-yellow-700'
+            }`}
+          >
+            {isCorrect ? UI_TEXT.correct : isCorrect === false ? UI_TEXT.incorrect : UI_TEXT.pending}
+          </span>
+        )}
       </div>
 
-      <p className="text-lg text-gray-800 font-medium mb-6 leading-relaxed whitespace-pre-wrap">
-        {problem.question}
-      </p>
+      {/* 문제 내용 */}
+      <div className="mb-6">
+        <p className="text-lg text-gray-800 font-medium leading-relaxed whitespace-pre-wrap">
+          {problem.question}
+        </p>
+      </div>
 
       {/* 문제 이미지 */}
       {problem.image_url && (
-        <div className="mb-6">
+        <div className="mb-6 bg-gray-50 rounded-xl p-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={problem.image_url}
             alt="문제 이미지"
-            className="max-w-full rounded-lg border border-gray-200"
+            className="max-w-full max-h-[400px] mx-auto rounded-lg border border-gray-200"
           />
         </div>
       )}
 
-      {/* 객관식 보기 */}
-      {problem.type === 'multiple_choice' && problem.options && (
-        <div className="space-y-3">
-          {problem.options.map((choice) => (
-            <button
-              key={choice.id}
-              onClick={() => onSelectChoice(choice.id)}
-              className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
-                currentAnswer === choice.id.toString()
-                  ? 'border-blue-500 bg-blue-50 text-blue-700'
-                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <span
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    currentAnswer === choice.id.toString()
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 text-gray-600'
-                  }`}
-                >
-                  {choice.id}
-                </span>
-                <span className="font-medium">{choice.text}</span>
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* 단답형 입력 */}
-      {problem.type === 'short_answer' && (
-        <div>
-          <input
-            type="text"
-            value={currentAnswer || ''}
-            onChange={(e) => onInputAnswer(e.target.value)}
-            placeholder={UI_TEXT.enterAnswer}
-            className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-lg"
-          />
-        </div>
-      )}
-
-      {/* 서술형 입력 */}
-      {problem.type === 'essay' && (
-        <div>
-          <textarea
-            value={currentAnswer || ''}
-            onChange={(e) => onInputAnswer(e.target.value)}
-            placeholder="풀이 과정과 답을 자세히 작성해주세요..."
-            rows={6}
-            className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all resize-none text-lg"
-          />
-        </div>
-      )}
+      {/* 답안 입력 영역 */}
+      <div className="mb-4">
+        <AnswerInput
+          type={problem.type}
+          choices={problem.options}
+          currentAnswer={currentAnswer ? { answer: currentAnswer.answer, imageUrl: currentAnswer.imageUrl } : undefined}
+          onAnswer={onAnswer}
+          onImageUpload={onImageUpload}
+          disabled={isGraded}
+          isGraded={isGraded}
+          isCorrect={isCorrect}
+          correctAnswer={correctAnswer}
+        />
+      </div>
 
       {/* 힌트 */}
       {showHint && problem.hint && (
@@ -251,7 +267,179 @@ const ProblemCard = memo(function ProblemCard({
   );
 });
 
-// 과제 카드 컴포넌트 (메모이제이션)
+// 제출 미리보기 모달
+const SubmitPreviewModal = memo(function SubmitPreviewModal({
+  problems,
+  answers,
+  onConfirm,
+  onCancel,
+  isSubmitting,
+}: {
+  problems: ProblemInfo[];
+  answers: Map<string, { answer: string; imageUrl?: string }>;
+  onConfirm: () => void;
+  onCancel: () => void;
+  isSubmitting: boolean;
+}) {
+  const answeredProblems = problems.filter(
+    (p) => answers.has(p.id) && answers.get(p.id)?.answer?.trim()
+  );
+  const unansweredProblems = problems.filter(
+    (p) => !answers.has(p.id) || !answers.get(p.id)?.answer?.trim()
+  );
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        {/* 헤더 */}
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+              <Eye className="w-6 h-6 text-blue-600" />
+              {UI_TEXT.previewSubmission}
+            </h3>
+            <button
+              onClick={onCancel}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5 text-gray-500" />
+            </button>
+          </div>
+        </div>
+
+        {/* 요약 정보 */}
+        <div className="p-6 border-b border-gray-200 bg-gray-50">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white rounded-xl p-4 border border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                  <Check className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">{UI_TEXT.answeredCount}</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {answeredProblems.length}/{problems.length}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl p-4 border border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <AlertCircle className="w-5 h-5 text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">{UI_TEXT.unansweredCount}</p>
+                  <p className="text-2xl font-bold text-orange-600">
+                    {unansweredProblems.length}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 답안 미리보기 */}
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="space-y-4">
+            {problems.map((problem) => {
+              const answer = answers.get(problem.id);
+              const hasAnswer = answer?.answer?.trim();
+
+              return (
+                <div
+                  key={problem.id}
+                  className={`p-4 rounded-xl border-2 ${
+                    hasAnswer ? 'border-green-200 bg-green-50' : 'border-orange-200 bg-orange-50'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <span
+                      className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${
+                        hasAnswer
+                          ? 'bg-green-500 text-white'
+                          : 'bg-orange-500 text-white'
+                      }`}
+                    >
+                      {problem.number}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+                        {problem.question}
+                      </p>
+                      {hasAnswer ? (
+                        <div className="flex items-start gap-2">
+                          <FileText className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-green-700 break-words">
+                              {problem.type === 'multiple_choice'
+                                ? `${answer?.answer}번 선택`
+                                : (answer?.answer?.length ?? 0) > 100
+                                ? `${answer?.answer?.substring(0, 100)}...`
+                                : answer?.answer}
+                            </p>
+                            {answer?.imageUrl && (
+                              <div className="flex items-center gap-1 mt-1 text-xs text-green-600">
+                                <ImageIcon className="w-3 h-3" />
+                                <span>이미지 첨부됨</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-orange-600 font-medium">
+                          답안이 입력되지 않았습니다
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 하단 버튼 */}
+        <div className="p-6 border-t border-gray-200 bg-gray-50">
+          {unansweredProblems.length > 0 && (
+            <p className="text-sm text-orange-600 mb-4 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4" />
+              미답변 문제가 {unansweredProblems.length}개 있습니다. 제출하시겠습니까?
+            </p>
+          )}
+          <div className="flex gap-3">
+            <button
+              onClick={onCancel}
+              disabled={isSubmitting}
+              className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors disabled:opacity-50"
+            >
+              {UI_TEXT.cancel}
+            </button>
+            <button
+              onClick={onConfirm}
+              disabled={isSubmitting}
+              className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>제출 중...</span>
+                </>
+              ) : (
+                <>
+                  <Send className="w-5 h-5" />
+                  <span>{UI_TEXT.submit}</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+// 과제 카드 컴포넌트
 const AssignmentCard = memo(function AssignmentCard({
   assignment,
   onSelect,
@@ -261,9 +449,10 @@ const AssignmentCard = memo(function AssignmentCard({
 }) {
   const status = statusConfig[assignment.status] || statusConfig.not_started;
   const StatusIcon = status.icon;
-  const progress = assignment.problem_count > 0
-    ? (assignment.completed_count / assignment.problem_count) * 100
-    : 0;
+  const progress =
+    assignment.problem_count > 0
+      ? (assignment.completed_count / assignment.problem_count) * 100
+      : 0;
 
   // 마감일까지 남은 시간
   const getRemainingTime = () => {
@@ -398,8 +587,8 @@ export default function SolvePage() {
   const [showHint, setShowHint] = useState(false);
   const [filter, setFilter] = useState<string>('all');
   const [isPaused, setIsPaused] = useState(false);
-  const [showImageUploader, setShowImageUploader] = useState(false);
-  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+  const [showSolutionUploader, setShowSolutionUploader] = useState(false);
+  const [showSubmitPreview, setShowSubmitPreview] = useState(false);
 
   // client-swr-dedup: 과제 목록 SWR로 관리
   const {
@@ -410,7 +599,12 @@ export default function SolvePage() {
     refresh: refreshAssignments,
   } = useAssignments({
     studentId,
-    filter: { status: filter === 'all' ? undefined : filter as 'not_started' | 'in_progress' | 'submitted' | 'graded' | 'completed' },
+    filter: {
+      status:
+        filter === 'all'
+          ? undefined
+          : (filter as 'not_started' | 'in_progress' | 'submitted' | 'graded' | 'completed'),
+    },
   });
 
   // Mock 문제 데이터 (실제로는 API에서 가져옴)
@@ -441,7 +635,8 @@ export default function SolvePage() {
     {
       id: 'saved-008',
       number: 3,
-      question: '사과 3개와 배 2개의 가격이 4,100원이고, 사과 2개와 배 3개의 가격이 4,400원이다. 사과 1개와 배 1개의 가격을 각각 구하시오.',
+      question:
+        '사과 3개와 배 2개의 가격이 4,100원이고, 사과 2개와 배 3개의 가격이 4,400원이다. 사과 1개와 배 1개의 가격을 각각 구하시오.',
       type: 'essay',
       points: 40,
       hint: '연립방정식을 세워 풀어보세요.',
@@ -454,6 +649,20 @@ export default function SolvePage() {
     problems,
     autoSave: true,
   });
+
+  // 답안 맵 (미리보기용)
+  const [answerMap, setAnswerMap] = useState<Map<string, { answer: string; imageUrl?: string }>>(
+    new Map()
+  );
+
+  // 답안 업데이트 시 맵도 업데이트
+  useEffect(() => {
+    const newMap = new Map<string, { answer: string; imageUrl?: string }>();
+    submission.answers.forEach((a) => {
+      newMap.set(a.problem_id, { answer: a.answer, imageUrl: a.image_url });
+    });
+    setAnswerMap(newMap);
+  }, [submission.answers]);
 
   // 타이머 효과
   useEffect(() => {
@@ -474,25 +683,59 @@ export default function SolvePage() {
   };
 
   // 과제 시작
-  const handleStartAssignment = useCallback(async (assignment: StudentAssignmentItem) => {
-    // 시작 전이면 API 호출
-    if (assignment.status === 'not_started') {
-      try {
-        await fetch(`/api/assignments/student/${assignment.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'start' }),
-        });
-      } catch (error) {
-        console.error('과제 시작 오류:', error);
+  const handleStartAssignment = useCallback(
+    async (assignment: StudentAssignmentItem) => {
+      // 시작 전이면 API 호출
+      if (assignment.status === 'not_started') {
+        try {
+          await fetch(`/api/assignments/student/${assignment.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'start' }),
+          });
+        } catch (error) {
+          console.error('과제 시작 오류:', error);
+        }
       }
-    }
-    setSelectedAssignment(assignment);
-  }, []);
+      setSelectedAssignment(assignment);
+    },
+    []
+  );
+
+  // 답안 입력 핸들러
+  const handleAnswer = useCallback(
+    (problemId: string, answer: string, imageUrl?: string) => {
+      submission.updateAnswer(problemId, answer, imageUrl);
+    },
+    [submission]
+  );
+
+  // 이미지 업로드 핸들러
+  const handleImageUpload = useCallback(
+    async (base64: string) => {
+      if (!submission.currentProblem) {
+        return { success: false, error: '현재 문제를 찾을 수 없습니다.' };
+      }
+
+      const result = await submission.uploadHandwritingImage(
+        submission.currentProblem.id,
+        base64,
+        true
+      );
+
+      return {
+        success: result.success,
+        url: result.url,
+        ocrText: result.ocrText,
+        error: result.error,
+      };
+    },
+    [submission]
+  );
 
   // 과제 제출
   const handleSubmit = useCallback(async () => {
-    setShowSubmitConfirm(false);
+    setShowSubmitPreview(false);
     const result = await submission.submitAssignment();
 
     if (result.success) {
@@ -507,35 +750,6 @@ export default function SolvePage() {
       alert(`제출 오류: ${result.error}`);
     }
   }, [submission, refreshAssignments]);
-
-  // 이미지 업로드 핸들러
-  const handleImageUpload = useCallback(
-    async (images: Array<{ file: File; preview: string }>) => {
-      if (images.length === 0 || !submission.currentProblem) return;
-
-      const file = images[0].file;
-      const reader = new FileReader();
-
-      reader.onload = async () => {
-        const base64 = (reader.result as string).split(',')[1];
-        const result = await submission.uploadHandwritingImage(
-          submission.currentProblem.id,
-          base64,
-          true
-        );
-
-        if (result.success && result.ocrText) {
-          // OCR 결과를 답안에 자동 입력
-          console.log('OCR 인식 결과:', result.ocrText);
-        }
-
-        setShowImageUploader(false);
-      };
-
-      reader.readAsDataURL(file);
-    },
-    [submission]
-  );
 
   // 로딩 상태
   if (authLoading || assignmentsLoading) {
@@ -579,7 +793,7 @@ export default function SolvePage() {
               className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
-              <span>목록으로</span>
+              <span>{UI_TEXT.backToList}</span>
             </button>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 text-gray-600">
@@ -656,14 +870,20 @@ export default function SolvePage() {
         {/* 문제 카드 */}
         <ProblemCard
           problem={submission.currentProblem}
-          currentAnswer={submission.currentAnswer?.answer}
-          onSelectChoice={(id) => submission.selectChoice(submission.currentProblem.id, id)}
-          onInputAnswer={(text) => submission.inputAnswer(submission.currentProblem.id, text)}
+          currentAnswer={
+            submission.currentAnswer
+              ? { answer: submission.currentAnswer.answer, imageUrl: submission.currentAnswer.image_url }
+              : undefined
+          }
+          onAnswer={(answer, imageUrl) =>
+            handleAnswer(submission.currentProblem.id, answer, imageUrl)
+          }
+          onImageUpload={handleImageUpload}
           showHint={showHint}
         />
 
         {/* 손글씨 업로드 영역 */}
-        {showImageUploader && (
+        {showSolutionUploader && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-gray-800 flex items-center gap-2">
@@ -671,23 +891,17 @@ export default function SolvePage() {
                 {UI_TEXT.uploadHandwriting}
               </h3>
               <button
-                onClick={() => setShowImageUploader(false)}
+                onClick={() => setShowSolutionUploader(false)}
                 className="p-1 hover:bg-gray-100 rounded-lg"
               >
                 <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
-            <ImageUploader
-              onImagesSelected={handleImageUpload}
-              multiple={false}
-              maxImages={1}
+            <SolutionUploader
+              onImageSelected={() => {}}
+              onUpload={handleImageUpload}
+              onCancel={() => setShowSolutionUploader(false)}
             />
-            {submission.isUploading && (
-              <div className="mt-4 flex items-center gap-2 text-blue-600">
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>{UI_TEXT.ocrProcessing}</span>
-              </div>
-            )}
           </div>
         )}
 
@@ -696,18 +910,28 @@ export default function SolvePage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowHint(!showHint)}
-              className="flex items-center gap-2 px-4 py-2 text-yellow-600 hover:bg-yellow-50 rounded-xl transition-colors"
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-colors ${
+                showHint
+                  ? 'bg-yellow-100 text-yellow-700'
+                  : 'text-yellow-600 hover:bg-yellow-50'
+              }`}
             >
               <Lightbulb className="w-5 h-5" />
               {UI_TEXT.showHint}
             </button>
-            <button
-              onClick={() => setShowImageUploader(!showImageUploader)}
-              className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
-            >
-              <Camera className="w-5 h-5" />
-              {UI_TEXT.uploadHandwriting}
-            </button>
+            {submission.currentProblem?.type === 'essay' && (
+              <button
+                onClick={() => setShowSolutionUploader(!showSolutionUploader)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-colors ${
+                  showSolutionUploader
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                <Camera className="w-5 h-5" />
+                {UI_TEXT.uploadHandwriting}
+              </button>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -721,7 +945,7 @@ export default function SolvePage() {
 
             {submission.currentIndex === problems.length - 1 ? (
               <button
-                onClick={() => setShowSubmitConfirm(true)}
+                onClick={() => setShowSubmitPreview(true)}
                 disabled={submission.unansweredProblems.length === problems.length}
                 className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -740,40 +964,15 @@ export default function SolvePage() {
           </div>
         </div>
 
-        {/* 제출 확인 모달 */}
-        {showSubmitConfirm && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">과제를 제출하시겠습니까?</h3>
-              <p className="text-gray-600 mb-2">
-                답변한 문제: {submission.progress.answered}/{problems.length}개
-              </p>
-              {submission.unansweredProblems.length > 0 && (
-                <p className="text-orange-600 text-sm mb-4">
-                  미답변 문제: {submission.unansweredProblems.map((p) => p.number).join(', ')}번
-                </p>
-              )}
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowSubmitConfirm(false)}
-                  className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200"
-                >
-                  취소
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  disabled={submission.isSubmitting}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {submission.isSubmitting ? (
-                    <Loader2 className="w-5 h-5 animate-spin mx-auto" />
-                  ) : (
-                    '제출하기'
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
+        {/* 제출 미리보기 모달 */}
+        {showSubmitPreview && (
+          <SubmitPreviewModal
+            problems={problems}
+            answers={answerMap}
+            onConfirm={handleSubmit}
+            onCancel={() => setShowSubmitPreview(false)}
+            isSubmitting={submission.isSubmitting}
+          />
         )}
       </div>
     );
@@ -797,7 +996,9 @@ export default function SolvePage() {
         <button
           onClick={() => setFilter('all')}
           className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-            filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            filter === 'all'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
           {UI_TEXT.allSubjects} ({statusCounts.all})
@@ -805,7 +1006,9 @@ export default function SolvePage() {
         <button
           onClick={() => setFilter('in_progress')}
           className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-            filter === 'in_progress' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            filter === 'in_progress'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
           {UI_TEXT.inProgress} ({statusCounts.in_progress})
@@ -813,7 +1016,9 @@ export default function SolvePage() {
         <button
           onClick={() => setFilter('not_started')}
           className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-            filter === 'not_started' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            filter === 'not_started'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
           {UI_TEXT.notStarted} ({statusCounts.not_started})
@@ -821,7 +1026,9 @@ export default function SolvePage() {
         <button
           onClick={() => setFilter('submitted')}
           className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-            filter === 'submitted' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            filter === 'submitted'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
           {UI_TEXT.submitted} ({statusCounts.submitted})
@@ -829,7 +1036,9 @@ export default function SolvePage() {
         <button
           onClick={() => setFilter('graded')}
           className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-            filter === 'graded' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            filter === 'graded'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
           {UI_TEXT.graded} ({statusCounts.graded})

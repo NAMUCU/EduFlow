@@ -55,6 +55,13 @@ interface ExamsStatsResponse {
   error?: string;
 }
 
+/** 시험 상세 응답 타입 */
+interface ExamDetailResponse {
+  success: boolean;
+  data?: ExamListItem;
+  error?: string;
+}
+
 // ============================================
 // Fetcher 함수
 // ============================================
@@ -268,7 +275,7 @@ export function useExams(options: UseExamsOptions = {}) {
 export function useExamDetail(examId: string | null) {
   const apiUrl = examId ? `/api/exams/${examId}` : null;
 
-  const { data, error, isLoading, mutate } = useSWR(
+  const { data, error, isLoading, mutate } = useSWR<ExamDetailResponse>(
     apiUrl,
     fetcher,
     {

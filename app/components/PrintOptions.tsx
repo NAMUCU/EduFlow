@@ -138,6 +138,7 @@ export default function PrintOptionsComponent({
           <div className="flex items-center gap-4">
             {logoPreview ? (
               <div className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={logoPreview}
                   alt="학원 로고"

@@ -4,14 +4,22 @@
  * PDF.co API를 통해 문제지, 정답지, 제출물 PDF를 생성합니다.
  *
  * POST: PDF 생성 요청
- * - type: 'problems' | 'answers' | 'submission'
+ * - type: 'problems' | 'answers' | 'submission' | 'both' (문제지+정답지 동시 생성)
  * - problems: 문제 배열 (problems, answers 유형에 필수)
  * - submissionData: 제출 데이터 (submission 유형에 필수)
  * - options: PDF 생성 옵션
+ *
+ * 개선 사항:
+ * - 문제지 + 정답지 동시 생성 지원 (type: 'both')
+ * - 새로운 pdf-generator 서비스 연동
+ * - KaTeX 수학 수식 렌더링 지원
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { generatePdfWithPdfCo, generatePdfPreviewHtml } from '@/lib/pdf-converter';
+import {
+  type ProblemForPdf,
+} from '@/lib/services/pdf-generator';
 import {
   GeneratePdfInput,
   GeneratePdfResponse,
@@ -22,6 +30,17 @@ import {
   Problem,
   PrintOptions,
 } from '@/types/pdf';
+
+// ============================================
+// 확장 타입 정의
+// ============================================
+
+// 확장된 타입 정의 (both 포함)
+type ExtendedPdfType = 'problems' | 'answers' | 'submission' | 'both';
+
+interface ExtendedPdfInput extends Omit<GeneratePdfInput, 'type'> {
+  type: ExtendedPdfType;
+}
 
 // ============================================
 // 유효성 검사 함수
@@ -59,18 +78,18 @@ function validateProblem(problem: unknown): problem is Problem {
 /**
  * GeneratePdfInput 유효성 검사
  */
-function validateGeneratePdfInput(body: unknown): body is GeneratePdfInput {
+function validateGeneratePdfInput(body: unknown): body is ExtendedPdfInput {
   if (typeof body !== 'object' || body === null) return false;
   const input = body as Record<string, unknown>;
 
-  // type 필드 확인
-  if (!['problems', 'answers', 'submission'].includes(input.type as string)) {
+  // type 필드 확인 (both 추가)
+  if (!['problems', 'answers', 'submission', 'both'].includes(input.type as string)) {
     return false;
   }
 
-  // problems/answers 유형은 문제 배열 필수
+  // problems/answers/both 유형은 문제 배열 필수
   if (
-    (input.type === 'problems' || input.type === 'answers') &&
+    (input.type === 'problems' || input.type === 'answers' || input.type === 'both') &&
     (!Array.isArray(input.problems) || input.problems.length === 0)
   ) {
     return false;
@@ -90,6 +109,22 @@ function validateGeneratePdfInput(body: unknown): body is GeneratePdfInput {
   }
 
   return true;
+}
+
+/**
+ * GeneratedProblem을 ProblemForPdf로 변환
+ */
+function convertToProblemForPdf(problem: GeneratedProblem): ProblemForPdf {
+  return {
+    id: problem.id,
+    question: problem.question,
+    answer: problem.answer,
+    solution: problem.solution,
+    difficulty: problem.difficulty as '하' | '중' | '상',
+    type: problem.type,
+    options: problem.options,
+    imageUrl: problem.imageUrl,
+  };
 }
 
 /**
@@ -189,8 +224,8 @@ export async function POST(
  * 새로운 PRD F3 형식 처리
  */
 async function handleNewFormat(
-  input: GeneratePdfInput
-): Promise<NextResponse<GeneratePdfResponse>> {
+  input: ExtendedPdfInput
+): Promise<NextResponse<GeneratePdfResponse | { success: boolean; problemSheet?: unknown; answerSheet?: unknown; error?: string; details?: string }>> {
   const { type, problems, submissionData, options } = input;
 
   // 문제 유효성 검사
@@ -217,8 +252,31 @@ async function handleNewFormat(
   }
 
   try {
-    // PDF.co API로 PDF 생성
-    const result = await generatePdfWithPdfCo(input);
+    // type이 'both'인 경우 문제지와 정답지 동시 생성
+    if (type === 'both') {
+      // PDF.co로 두 PDF 동시 생성
+      const [problemSheetResult, answerSheetResult] = await Promise.all([
+        generatePdfWithPdfCo({
+          ...input,
+          type: 'problems',
+          options: { ...options, title: options.title || '문제지' },
+        }),
+        generatePdfWithPdfCo({
+          ...input,
+          type: 'answers',
+          options: { ...options, title: (options.title || '문제지') + ' - 정답지' },
+        }),
+      ]);
+
+      return NextResponse.json({
+        success: true,
+        problemSheet: problemSheetResult,
+        answerSheet: answerSheetResult,
+      });
+    }
+
+    // 기존 단일 PDF 생성 로직
+    const result = await generatePdfWithPdfCo(input as GeneratePdfInput);
 
     return NextResponse.json({
       success: true,
@@ -338,8 +396,9 @@ export async function PUT(
       );
     }
 
-    // HTML 미리보기 생성
-    const html = generatePdfPreviewHtml(body);
+    // HTML 미리보기 생성 (both 타입은 problems로 처리)
+    const previewInput = body.type === 'both' ? { ...body, type: 'problems' as const } : body;
+    const html = generatePdfPreviewHtml(previewInput as GeneratePdfInput);
 
     return NextResponse.json({
       success: true,
@@ -369,25 +428,30 @@ export async function GET(): Promise<NextResponse> {
   return NextResponse.json({
     status: 'ok',
     message: 'PDF 생성 API가 정상 작동 중입니다.',
-    version: '2.0.0',
+    version: '2.1.0',
     features: {
       pdfCoEnabled: hasPdfCoKey,
-      supportedTypes: ['problems', 'answers', 'submission'],
+      supportedTypes: ['problems', 'answers', 'submission', 'both'],
       supportedPaperSizes: ['A4', 'Letter'],
       storageEnabled: true,
+      mathRendering: true, // KaTeX 수학 수식 렌더링 지원
     },
     endpoints: {
       POST: {
         description: 'PDF 생성 (PRD F3 형식 또는 기존 형식)',
         newFormat: {
-          type: "'problems' | 'answers' | 'submission' - PDF 유형",
+          type: "'problems' | 'answers' | 'submission' | 'both' - PDF 유형 (both: 문제지+정답지 동시 생성)",
           problems: 'GeneratedProblem[] - 문제 배열',
           submissionData: '{ studentName, submittedAt, answers } - 제출 데이터 (submission 유형)',
-          options: '{ title, showAnswers, showExplanations, fontSize, paperSize, ... }',
+          options: '{ title, showAnswers, showExplanations, fontSize, paperSize, academyLogo, academyName, ... }',
         },
         legacyFormat: {
           problems: 'Problem[] - 문제 배열',
           options: 'PrintOptions - 출력 옵션',
+        },
+        bothFormat: {
+          description: '문제지와 정답지를 동시에 생성합니다',
+          response: '{ success, problemSheet: PdfResult, answerSheet: PdfResult }',
         },
       },
       PUT: {

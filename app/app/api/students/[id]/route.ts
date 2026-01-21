@@ -106,6 +106,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         email: student.parent.email,
         relationship: student.parent.relationship as '부' | '모' | '조부' | '조모' | '기타',
       },
+      // 통계 요약 (UI용)
+      stats: {
+        averageScore: student.averageScore || 0,
+        trend: 'stable' as const,
+        completedAssignments: assignmentStats.completed,
+        totalAssignments: assignmentStats.total,
+        attendanceRate: attendanceStats.attendanceRate,
+        studyHours: 12, // Mock
+      },
       grades: gradeSummary,
       recentGrades: studentGrades.slice(0, 5).map((g) => ({
         id: `${id}-${g.date}-${g.subject}`,

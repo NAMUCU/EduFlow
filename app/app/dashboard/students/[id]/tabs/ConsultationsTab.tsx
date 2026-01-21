@@ -2,7 +2,7 @@
 
 import { memo } from 'react';
 import { StudentDetail } from '@/types/student';
-import { MessageSquare, Calendar, User } from 'lucide-react';
+import { MessageSquare, Calendar, User, Clock } from 'lucide-react';
 
 interface ConsultationsTabProps {
   student: StudentDetail;
@@ -20,7 +20,7 @@ export const ConsultationsTab = memo(function ConsultationsTab({ student }: Cons
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <MessageSquare className="w-5 h-5 text-primary-500" />
-                  <span className="font-medium text-gray-900">{consultation.topic}</span>
+                  <span className="font-medium text-gray-900">{consultation.topic || '상담'}</span>
                 </div>
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                   consultation.status === 'completed' ? 'bg-green-100 text-green-700' :
@@ -35,11 +35,18 @@ export const ConsultationsTab = memo(function ConsultationsTab({ student }: Cons
               <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
-                  <span>{consultation.date}</span>
+                  <span>{new Date(consultation.date).toLocaleDateString('ko-KR')}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Clock className="w-4 h-4" />
+                  <span>{consultation.duration}분</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <User className="w-4 h-4" />
-                  <span>{consultation.counselor}</span>
+                  <span>
+                    {consultation.type === 'in_person' ? '대면' :
+                     consultation.type === 'phone' ? '전화' : '화상'}
+                  </span>
                 </div>
               </div>
 

@@ -109,6 +109,15 @@ async function fetchStudentDetailParallel(studentId: string): Promise<StudentDet
   // 병렬로 받아온 데이터를 조합
   const studentDetail: StudentDetail = {
     ...basicRes.data,
+    // stats 계산 (UI용 요약 정보)
+    stats: {
+      averageScore: basicRes.data.averageScore || 0,
+      trend: 'stable' as const,
+      completedAssignments: assignmentsRes.data.stats.completed,
+      totalAssignments: assignmentsRes.data.stats.total,
+      attendanceRate: attendanceRes.data.stats.attendanceRate,
+      studyHours: 0, // 별도 API 필요시 추가
+    },
     grades: gradesRes.data.summary,
     recentGrades: gradesRes.data.grades,
     assignmentStats: assignmentsRes.data.stats,
@@ -415,7 +424,7 @@ export function useStudentConsultations(studentId: string | null) {
  * Vercel Best Practice: bundle-preload
  * 탭 hover 시 해당 탭의 데이터를 미리 로드
  */
-export function preloadStudentData(studentId: string, dataType: 'grades' | 'assignments' | 'attendance' | 'consultations') {
+export function preloadStudentData(studentId: string, dataType: 'grades' | 'assignments' | 'attendance' | 'consultations' | 'weakness') {
   if (typeof window === 'undefined') return;
 
   const url = `/api/students/${studentId}/${dataType}`;

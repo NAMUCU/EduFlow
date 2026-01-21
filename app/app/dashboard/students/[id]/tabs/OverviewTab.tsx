@@ -2,7 +2,7 @@
 
 import { memo } from 'react';
 import { StudentDetail } from '@/types/student';
-import { TrendIcon, StatCard } from '../page';
+import { TrendIcon, StatCard } from '../components/StatCard';
 import { BookOpen, Target, Clock, TrendingUp } from 'lucide-react';
 
 interface OverviewTabProps {

@@ -16,8 +16,10 @@ import {
   Moon,
   Sun,
   Smartphone,
+  Key,
+  Cpu,
 } from 'lucide-react'
-import type { ProfileSettings, NotificationSettings, AcademySettings } from '@/types/settings'
+import type { ProfileSettings, NotificationSettings, AcademySettings, ApiKeySettings, ModelSettings } from '@/types/settings'
 
 // 설정 컴포넌트 동적 임포트 (bundle-dynamic-imports)
 // 무거운 폼 컴포넌트를 초기 번들에서 제외하여 TTI 개선
@@ -38,6 +40,16 @@ const NotificationForm = dynamic(
 
 const AcademyForm = dynamic(
   () => import('@/components/settings/AcademyForm'),
+  { ssr: false, loading: () => <SettingsPanelSkeleton /> }
+)
+
+const ApiKeysForm = dynamic(
+  () => import('@/components/settings/ApiKeysForm'),
+  { ssr: false, loading: () => <SettingsPanelSkeleton /> }
+)
+
+const ModelSettingsForm = dynamic(
+  () => import('@/components/settings/ModelSettingsForm'),
   { ssr: false, loading: () => <SettingsPanelSkeleton /> }
 )
 
@@ -69,6 +81,8 @@ export default function SettingsPage() {
   const profileDataRef = useRef<ProfileSettings | null>(null)
   const notificationDataRef = useRef<NotificationSettings | null>(null)
   const academyDataRef = useRef<AcademySettings | null>(null)
+  const apiKeysDataRef = useRef<ApiKeySettings | null>(null)
+  const modelSettingsDataRef = useRef<ModelSettings | null>(null)
 
   // 화면 설정 (로컬 상태)
   const [theme, setTheme] = useState('light')
@@ -87,6 +101,8 @@ export default function SettingsPage() {
     { id: 'notifications', label: '알림 설정', icon: Bell },
     ...(userRole === 'owner' ? [{ id: 'academy', label: '학원 설정', icon: Building2 }] : []),
     { id: 'appearance', label: '화면 설정', icon: Palette },
+    { id: 'apiKeys', label: 'API 키 관리', icon: Key },
+    { id: 'modelSettings', label: '모델 설정', icon: Cpu },
     { id: 'ai', label: 'AI 설정', icon: Smartphone },
     { id: 'billing', label: '결제/구독', icon: CreditCard },
     { id: 'help', label: '도움말', icon: HelpCircle },
@@ -118,6 +134,14 @@ export default function SettingsPage() {
 
   const handleAcademySave = (data: AcademySettings) => {
     academyDataRef.current = data
+  }
+
+  const handleApiKeysSave = (data: ApiKeySettings) => {
+    apiKeysDataRef.current = data
+  }
+
+  const handleModelSettingsSave = (data: ModelSettings) => {
+    modelSettingsDataRef.current = data
   }
 
   return (
@@ -185,6 +209,22 @@ export default function SettingsPage() {
                 <AcademyForm
                   initialData={academyDataRef.current}
                   onSave={handleAcademySave}
+                />
+              )}
+
+              {/* API 키 관리 */}
+              {activeTab === 'apiKeys' && (
+                <ApiKeysForm
+                  initialData={apiKeysDataRef.current}
+                  onSave={handleApiKeysSave}
+                />
+              )}
+
+              {/* 모델 설정 */}
+              {activeTab === 'modelSettings' && (
+                <ModelSettingsForm
+                  initialData={modelSettingsDataRef.current}
+                  onSave={handleModelSettingsSave}
                 />
               )}
             </Suspense>

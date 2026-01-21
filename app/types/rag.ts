@@ -2,7 +2,7 @@
  * RAG (Retrieval-Augmented Generation) 관련 타입 정의
  *
  * 이 파일은 기출문제/교과서 검색에 필요한 타입들을 정의합니다.
- * OpenAI Files Search API와 연동하여 사용됩니다.
+ * Gemini File Search API와 연동하여 사용됩니다.
  */
 
 /**
@@ -11,10 +11,15 @@
 export type DocumentType = 'exam' | 'textbook' | 'mockexam' | 'workbook'
 
 /**
+ * PDF 전처리 방식
+ */
+export type PreprocessMethod = 'auto' | 'markdown' | 'vision'
+
+/**
  * 문서 메타데이터
  */
 export interface DocumentMetadata {
-  /** 문서 ID (OpenAI Vector Store 문서 ID) */
+  /** 문서 ID */
   id: string
   /** 원본 파일명 */
   filename: string
@@ -40,10 +45,20 @@ export interface DocumentMetadata {
   academy_id: string
   /** Supabase Storage 경로 */
   storage_path: string
-  /** OpenAI Vector Store ID */
+  /** Gemini File Search Store ID */
+  file_search_store_id?: string
+  /** Gemini File ID */
+  gemini_file_id?: string
+  /** OpenAI Vector Store ID (레거시) */
   vector_store_id?: string
-  /** OpenAI File ID */
+  /** OpenAI File ID (레거시) */
   openai_file_id?: string
+  /** 전처리 방식 */
+  preprocess_method?: PreprocessMethod
+  /** 파일 크기 (bytes) */
+  file_size?: number
+  /** 페이지 수 */
+  page_count?: number
 }
 
 /**
@@ -130,6 +145,8 @@ export interface DocumentUploadRequest {
   year?: number
   /** 월 (모의고사의 경우) */
   month?: number
+  /** 전처리 방식 */
+  preprocessMethod?: PreprocessMethod
 }
 
 /**
@@ -144,34 +161,75 @@ export interface DocumentUploadResponse {
   error?: string
 }
 
+// ============================================
+// Gemini File Search API 관련 타입
+// ============================================
+
 /**
- * OpenAI Vector Store 생성 응답
+ * Gemini File Search Store
  */
-export interface VectorStoreResponse {
-  id: string
-  object: string
+export interface FileSearchStore {
+  /** Store 이름 (전체 경로) */
   name: string
-  status: string
-  file_counts: {
-    in_progress: number
-    completed: number
-    failed: number
-    cancelled: number
-    total: number
-  }
-  created_at: number
+  /** 표시 이름 */
+  display_name?: string
+  /** 생성 시간 */
+  create_time?: string
+  /** 상태 */
+  status?: string
 }
 
 /**
- * OpenAI File 업로드 응답
+ * Gemini File 응답
  */
-export interface OpenAIFileResponse {
-  id: string
-  object: string
-  bytes: number
-  created_at: number
-  filename: string
-  purpose: string
+export interface GeminiFileResponse {
+  /** 파일 이름 (전체 경로) */
+  name: string
+  /** 표시 이름 */
+  display_name?: string
+  /** MIME 타입 */
+  mime_type?: string
+  /** 파일 크기 (bytes) */
+  size_bytes?: number
+  /** 생성 시간 */
+  create_time?: string
+  /** 상태 */
+  state?: 'PROCESSING' | 'ACTIVE' | 'FAILED'
+}
+
+/**
+ * RAG 채팅 메시지
+ */
+export interface RagChatMessage {
+  role: 'user' | 'model'
+  parts: { text: string }[]
+}
+
+/**
+ * RAG 채팅 요청
+ */
+export interface RagChatRequest {
+  /** 사용자 메시지 */
+  message: string
+  /** 이전 대화 기록 */
+  history?: RagChatMessage[]
+  /** 사용할 모델 */
+  model?: string
+  /** 시스템 프롬프트 */
+  systemInstruction?: string
+}
+
+/**
+ * RAG 채팅 응답
+ */
+export interface RagChatResponse {
+  /** AI 응답 텍스트 */
+  text: string
+  /** 참조한 문서들 */
+  citations?: {
+    filename: string
+    content: string
+  }[]
 }
 
 // ============================================
@@ -184,6 +242,13 @@ export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   textbook: '교과서',
   mockexam: '모의고사',
   workbook: '문제집',
+}
+
+/** 전처리 방식 한국어 라벨 */
+export const PREPROCESS_METHOD_LABELS: Record<PreprocessMethod, string> = {
+  auto: '자동 (권장)',
+  markdown: '마크다운 변환',
+  vision: 'Vision 처리 (스캔 PDF)',
 }
 
 /** 과목 목록 */
@@ -205,4 +270,22 @@ export const PUBLISHERS = [
   '동아출판',
   'EBS',
   '기타',
+] as const
+
+// ============================================
+// 모델 설정 (관리자 페이지용)
+// ============================================
+
+/** 사용 가능한 채팅 모델 */
+export const CHAT_MODELS = [
+  { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', provider: 'google' },
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', provider: 'google' },
+  { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', provider: 'google' },
+] as const
+
+/** 사용 가능한 Vision 모델 */
+export const VISION_MODELS = [
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', provider: 'google' },
+  { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', provider: 'google' },
+  { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4.5', provider: 'anthropic' },
 ] as const

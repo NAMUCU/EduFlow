@@ -14,7 +14,7 @@
 - PDF 변환: PDF.co
 - 문제 생성: Gemini 3.0 Pro
 - 문제 검수: Gemini, ChatGPT, Claude (멀티 셀렉트 가능)
-- RAG: OpenAI Files Search API (찾아보기용)
+- RAG: Gemini File Search API (찾아보기용)
 
 ## 코드 스타일
 - TypeScript 사용

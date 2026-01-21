@@ -4,10 +4,11 @@
  * 학습 보고서 대시보드 페이지
  *
  * 학생별 학습 리포트를 조회, 생성, 관리하는 페이지입니다.
+ * - AI 보고서 생성 (학부모용/강사용)
  * - 학생/기간 선택으로 리포트 생성
  * - 리포트 목록 조회 및 필터링
  * - 리포트 상세 보기 및 PDF 다운로드
- * - 학부모 발송 기능
+ * - 학부모 발송 기능 (카카오/문자)
  *
  * Vercel Best Practices 적용:
  * - async-parallel: Promise.all로 병렬 데이터 fetching (useReportsTeacher 훅에서 처리)
@@ -38,6 +39,7 @@ import {
   Loader2,
   X,
   AlertCircle,
+  Sparkles,
 } from 'lucide-react'
 import {
   Report,
@@ -45,6 +47,10 @@ import {
   ReportGenerateRequest,
   ReportPeriodType,
   ReportStatus,
+  ReportTargetType,
+  AutoReportGenerateRequest,
+  ParentReport,
+  TeacherReport,
   REPORT_STATUS_LABELS,
   getReportStatusColor,
 } from '@/types/report'
@@ -67,6 +73,34 @@ const ReportViewer = dynamic(
   }
 )
 
+// AI 보고서 생성 컴포넌트 동적 로딩
+const ReportGenerator = dynamic(
+  () => import('@/components/reports/ReportGenerator'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="card flex items-center justify-center p-12">
+        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+        <span className="ml-3 text-gray-500">로딩 중...</span>
+      </div>
+    ),
+  }
+)
+
+// 보고서 미리보기 컴포넌트 동적 로딩
+const ReportPreview = dynamic(
+  () => import('@/components/reports/ReportPreview'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="card flex items-center justify-center p-12">
+        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+        <span className="ml-3 text-gray-500">로딩 중...</span>
+      </div>
+    ),
+  }
+)
+
 // ============================================
 // bundle-preload: ReportViewer 모듈 사전 로딩
 // hover/focus 시 사용자 의도를 예측하여 미리 로딩
@@ -74,6 +108,18 @@ const ReportViewer = dynamic(
 const preloadReportViewer = () => {
   if (typeof window !== 'undefined') {
     void import('@/components/ReportViewer')
+  }
+}
+
+const preloadReportGenerator = () => {
+  if (typeof window !== 'undefined') {
+    void import('@/components/reports/ReportGenerator')
+  }
+}
+
+const preloadReportPreview = () => {
+  if (typeof window !== 'undefined') {
+    void import('@/components/reports/ReportPreview')
   }
 }
 
@@ -102,10 +148,13 @@ const UI_TEXT = {
   allStatus: '전체',
   searchPlaceholder: '학생 이름으로 검색...',
   generateNewReport: '새 리포트 생성',
+  aiGenerateReport: 'AI 보고서 생성',
   cancel: '취소',
   create: '생성',
   error: '오류가 발생했습니다',
   success: '성공적으로 처리되었습니다',
+  aiReportGenerating: 'AI 보고서 생성 중...',
+  aiReportComplete: 'AI 보고서 생성 완료',
 }
 
 // ============================================
@@ -383,11 +432,28 @@ const GenerateModal = memo(function GenerateModal({
 // ============================================
 // 메인 페이지 컴포넌트
 // ============================================
+// AI 보고서 생성 결과 타입
+interface AIGeneratedReports {
+  studentId: string
+  studentName: string
+  parentReport?: ParentReport
+  teacherReport?: TeacherReport
+}
+
 export default function ReportsPage() {
   // 필터 상태
   const [statusFilter, setStatusFilter] = useState<ReportStatus | ''>('')
   const [searchQuery, setSearchQuery] = useState('')
   const [showGenerateModal, setShowGenerateModal] = useState(false)
+
+  // AI 보고서 생성 관련 상태
+  const [showAIGenerateModal, setShowAIGenerateModal] = useState(false)
+  const [isAIGenerating, setIsAIGenerating] = useState(false)
+  const [aiGenerateProgress, setAIGenerateProgress] = useState(0)
+  const [currentGeneratingStudent, setCurrentGeneratingStudent] = useState<string>('')
+  const [aiGeneratedReports, setAIGeneratedReports] = useState<AIGeneratedReports[]>([])
+  const [showAIPreview, setShowAIPreview] = useState(false)
+  const [currentPreviewIndex, setCurrentPreviewIndex] = useState(0)
 
   // 선택된 리포트 상태
   const [selectedReport, setSelectedReport] = useState<Report | null>(null)
@@ -508,6 +574,106 @@ export default function ReportsPage() {
     setSelectedReport(null)
   }, [])
 
+  // ============================================
+  // AI 보고서 생성 관련 핸들러
+  // ============================================
+
+  // AI 보고서 생성 요청
+  const handleAIGenerateReport = useCallback(async (request: AutoReportGenerateRequest) => {
+    setIsAIGenerating(true)
+    setAIGenerateProgress(0)
+    setAIGeneratedReports([])
+    setError(null)
+
+    const studentIds = request.studentIds || []
+    const totalStudents = studentIds.length
+
+    try {
+      // Mock: 학생별로 보고서 생성 시뮬레이션
+      // 실제로는 서버 API를 호출해야 함
+      const results: AIGeneratedReports[] = []
+
+      for (let i = 0; i < totalStudents; i++) {
+        const studentId = studentIds[i]
+        const student = students.find((s) => s.id === studentId)
+
+        if (student) {
+          setCurrentGeneratingStudent(student.name)
+
+          // 보고서 생성 시뮬레이션 (실제로는 API 호출)
+          await new Promise((resolve) => setTimeout(resolve, 500 + Math.random() * 500))
+
+          const result: AIGeneratedReports = {
+            studentId: student.id,
+            studentName: student.name,
+          }
+
+          // 학부모용 보고서 생성
+          if (request.targetTypes.includes('parent')) {
+            result.parentReport = generateMockParentReport(student, request)
+          }
+
+          // 강사용 보고서 생성
+          if (request.targetTypes.includes('teacher')) {
+            result.teacherReport = generateMockTeacherReport(student, request)
+          }
+
+          results.push(result)
+        }
+
+        setAIGenerateProgress(((i + 1) / totalStudents) * 100)
+      }
+
+      setAIGeneratedReports(results)
+      setShowAIGenerateModal(false)
+      setShowAIPreview(true)
+      setCurrentPreviewIndex(0)
+    } catch (err) {
+      console.error('AI 보고서 생성 오류:', err)
+      setError('AI 보고서 생성에 실패했습니다.')
+    } finally {
+      setIsAIGenerating(false)
+      setCurrentGeneratingStudent('')
+    }
+  }, [students])
+
+  // AI 미리보기에서 이전 학생
+  const handleAIPreviouStudent = useCallback(() => {
+    setCurrentPreviewIndex((prev) => Math.max(0, prev - 1))
+  }, [])
+
+  // AI 미리보기에서 다음 학생
+  const handleAINextStudent = useCallback(() => {
+    setCurrentPreviewIndex((prev) => Math.min(aiGeneratedReports.length - 1, prev + 1))
+  }, [aiGeneratedReports.length])
+
+  // AI 보고서 PDF 다운로드
+  const handleAIPdfDownload = useCallback(async (reportType: ReportTargetType) => {
+    // Mock: PDF 다운로드 기능 구현 예정
+    alert(`${reportType === 'parent' ? '학부모용' : '강사용'} 보고서 PDF 다운로드 기능이 추후 구현됩니다.`)
+  }, [])
+
+  // AI 보고서 카카오 발송
+  const handleAISendKakao = useCallback(async (reportType: ReportTargetType) => {
+    // Mock: 카카오 발송 기능 구현 예정
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    alert(`${reportType === 'parent' ? '학부모용' : '강사용'} 보고서가 카카오톡으로 발송되었습니다.`)
+  }, [])
+
+  // AI 보고서 문자 발송
+  const handleAISendSms = useCallback(async (reportType: ReportTargetType) => {
+    // Mock: 문자 발송 기능 구현 예정
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    alert(`${reportType === 'parent' ? '학부모용' : '강사용'} 보고서가 문자로 발송되었습니다.`)
+  }, [])
+
+  // AI 미리보기 닫기
+  const handleCloseAIPreview = useCallback(() => {
+    setShowAIPreview(false)
+    setAIGeneratedReports([])
+    setCurrentPreviewIndex(0)
+  }, [])
+
   return (
     <div>
       <Header title={UI_TEXT.pageTitle} subtitle={UI_TEXT.pageSubtitle} />
@@ -595,12 +761,23 @@ export default function ReportsPage() {
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
           </button>
 
-          {/* 리포트 생성 버튼 - bundle-preload: hover 시 모달 컴포넌트 사전 로딩 */}
+          {/* AI 보고서 생성 버튼 - 새로 추가 */}
+          <button
+            onClick={() => setShowAIGenerateModal(true)}
+            onMouseEnter={preloadReportGenerator}
+            onFocus={preloadReportGenerator}
+            className="btn-primary flex items-center gap-2 ml-auto bg-gradient-to-r from-purple-500 to-primary-500 hover:from-purple-600 hover:to-primary-600"
+          >
+            <Sparkles className="w-4 h-4" />
+            {UI_TEXT.aiGenerateReport}
+          </button>
+
+          {/* 일반 리포트 생성 버튼 */}
           <button
             onClick={() => setShowGenerateModal(true)}
             onMouseEnter={preloadReportViewer}
             onFocus={preloadReportViewer}
-            className="btn-primary flex items-center gap-2 ml-auto"
+            className="btn-secondary flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             {UI_TEXT.generateNewReport}
@@ -681,6 +858,269 @@ export default function ReportsPage() {
           onGenerate={handleGenerateReport}
         />
       )}
+
+      {/* AI 보고서 생성 모달 */}
+      {showAIGenerateModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="w-full max-w-2xl">
+            <Suspense
+              fallback={
+                <div className="bg-white rounded-2xl p-12 flex items-center justify-center">
+                  <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+                </div>
+              }
+            >
+              <ReportGenerator
+                students={students}
+                onGenerate={handleAIGenerateReport}
+                onCancel={() => setShowAIGenerateModal(false)}
+                isGenerating={isAIGenerating}
+                progress={aiGenerateProgress}
+                currentStudent={currentGeneratingStudent}
+              />
+            </Suspense>
+          </div>
+        </div>
+      )}
+
+      {/* AI 보고서 미리보기 모달 */}
+      {showAIPreview && aiGeneratedReports.length > 0 && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="w-full max-w-3xl">
+            <Suspense
+              fallback={
+                <div className="bg-white rounded-2xl p-12 flex items-center justify-center">
+                  <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+                </div>
+              }
+            >
+              <ReportPreview
+                studentName={aiGeneratedReports[currentPreviewIndex]?.studentName || ''}
+                studentInfo={{
+                  grade: students.find((s) => s.id === aiGeneratedReports[currentPreviewIndex]?.studentId)?.grade || '',
+                  school: students.find((s) => s.id === aiGeneratedReports[currentPreviewIndex]?.studentId)?.school || '',
+                }}
+                periodLabel={
+                  aiGeneratedReports[currentPreviewIndex]?.parentReport?.period.label ||
+                  aiGeneratedReports[currentPreviewIndex]?.teacherReport?.period.label ||
+                  ''
+                }
+                parentReport={aiGeneratedReports[currentPreviewIndex]?.parentReport}
+                teacherReport={aiGeneratedReports[currentPreviewIndex]?.teacherReport}
+                onClose={handleCloseAIPreview}
+                onDownloadPdf={handleAIPdfDownload}
+                onSendKakao={handleAISendKakao}
+                onSendSms={handleAISendSms}
+                onPrevious={currentPreviewIndex > 0 ? handleAIPreviouStudent : undefined}
+                onNext={currentPreviewIndex < aiGeneratedReports.length - 1 ? handleAINextStudent : undefined}
+                showNavigation={aiGeneratedReports.length > 1}
+              />
+            </Suspense>
+            {/* 학생 네비게이션 표시 */}
+            {aiGeneratedReports.length > 1 && (
+              <div className="text-center mt-4 text-white">
+                {currentPreviewIndex + 1} / {aiGeneratedReports.length} 학생
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
+}
+
+// ============================================
+// Mock 데이터 생성 함수 (실제로는 서버에서 생성)
+// ============================================
+
+function generateMockParentReport(
+  student: ReportStudent,
+  request: AutoReportGenerateRequest
+): ParentReport {
+  const today = new Date()
+  const startDate = new Date(request.startDate)
+  const endDate = new Date(request.endDate)
+
+  return {
+    id: `parent-${student.id}-${Date.now()}`,
+    studentId: student.id,
+    studentName: student.name,
+    period: {
+      type: request.periodType,
+      startDate: request.startDate,
+      endDate: request.endDate,
+      label: request.periodType === 'weekly'
+        ? `${startDate.getMonth() + 1}월 ${Math.ceil(startDate.getDate() / 7)}주차`
+        : `${startDate.getFullYear()}년 ${startDate.getMonth() + 1}월`,
+      year: startDate.getFullYear(),
+      month: startDate.getMonth() + 1,
+      week: request.periodType === 'weekly' ? Math.ceil(startDate.getDate() / 7) : undefined,
+    },
+    generatedAt: today.toISOString(),
+    summary: `${student.name} 학생은 이번 주에 전반적으로 좋은 학습 태도를 보여주었습니다. 특히 수학 과목에서 집중력 있게 문제를 풀어나가는 모습이 인상적이었습니다.`,
+    praisePoints: [
+      {
+        title: '꾸준한 출석',
+        description: '이번 주 모든 수업에 빠지지 않고 참석했습니다.',
+        emoji: '🌟',
+      },
+      {
+        title: '적극적인 질문',
+        description: '수업 중 모르는 부분을 적극적으로 질문하며 이해하려는 모습을 보였습니다.',
+        emoji: '💪',
+      },
+    ],
+    conversationTopics: [
+      {
+        topic: '이번 주 배운 수학 개념',
+        suggestedQuestion: '이번 주에 수학 시간에 어떤 걸 배웠어? 어려운 부분은 없었어?',
+        context: '일차방정식 단원을 학습하며 새로운 개념을 배웠습니다.',
+      },
+      {
+        topic: '학원에서 친구들과의 관계',
+        suggestedQuestion: '학원에서 친구들이랑 잘 지내고 있어?',
+        context: '그룹 학습 시간에 친구들과 협력하며 문제를 풀었습니다.',
+      },
+    ],
+    encouragementMessage: `${student.name} 학생이 영어 독해 부분에서 조금 어려워하고 있지만, 꾸준히 노력하면 분명 좋아질 것입니다. 집에서도 하루 10분씩 영어 지문을 읽는 습관을 들여보세요.`,
+    upcomingGoals: [
+      {
+        goal: '수학 연산 정확도 높이기',
+        howToSupport: '계산 실수를 줄일 수 있도록 검산하는 습관을 격려해 주세요.',
+      },
+      {
+        goal: '영어 어휘 20개 암기',
+        howToSupport: '저녁 시간에 잠깐 단어 퀴즈를 내주시면 도움이 됩니다.',
+      },
+    ],
+    attendanceSummary: {
+      totalDays: 5,
+      presentDays: 5,
+      message: '이번 주 출석 상태가 매우 좋습니다! 꾸준한 출석이 성적 향상의 기본입니다.',
+    },
+    gradeSummary: {
+      trend: 'improving',
+      trendMessage: '전반적으로 성적이 향상되고 있는 추세입니다. 특히 수학 과목에서 눈에 띄는 성장을 보이고 있습니다.',
+      strongSubjects: ['수학', '과학'],
+      focusAreas: ['영어 독해', '국어 문법'],
+    },
+    aiComment: `AI 분석 결과, ${student.name} 학생은 논리적 사고력이 뛰어나 수학과 과학 과목에서 강점을 보이고 있습니다. 언어 영역에서는 꾸준한 독서를 통해 어휘력과 독해력을 키워나가면 더욱 균형 잡힌 학습이 가능할 것으로 보입니다.`,
+  }
+}
+
+function generateMockTeacherReport(
+  student: ReportStudent,
+  request: AutoReportGenerateRequest
+): TeacherReport {
+  const today = new Date()
+  const startDate = new Date(request.startDate)
+
+  return {
+    id: `teacher-${student.id}-${Date.now()}`,
+    studentId: student.id,
+    studentName: student.name,
+    period: {
+      type: request.periodType,
+      startDate: request.startDate,
+      endDate: request.endDate,
+      label: request.periodType === 'weekly'
+        ? `${startDate.getMonth() + 1}월 ${Math.ceil(startDate.getDate() / 7)}주차`
+        : `${startDate.getFullYear()}년 ${startDate.getMonth() + 1}월`,
+      year: startDate.getFullYear(),
+      month: startDate.getMonth() + 1,
+      week: request.periodType === 'weekly' ? Math.ceil(startDate.getDate() / 7) : undefined,
+    },
+    generatedAt: today.toISOString(),
+    gradeAnalysis: {
+      overallAverage: 78,
+      changeFromPrevious: 5,
+      bySubject: [
+        { subject: '수학', average: 85, change: 8, testsCount: 3, highestScore: 92, lowestScore: 78 },
+        { subject: '영어', average: 72, change: 2, testsCount: 2, highestScore: 78, lowestScore: 66 },
+        { subject: '국어', average: 75, change: 3, testsCount: 2, highestScore: 80, lowestScore: 70 },
+      ],
+      byUnit: [
+        { subject: '수학', unit: '일차방정식', correctRate: 90, totalProblems: 20, isWeak: false },
+        { subject: '수학', unit: '부등식', correctRate: 75, totalProblems: 16, isWeak: false },
+        { subject: '영어', unit: '독해', correctRate: 55, totalProblems: 20, isWeak: true },
+        { subject: '영어', unit: '문법', correctRate: 70, totalProblems: 15, isWeak: false },
+      ],
+    },
+    weaknessAnalysis: {
+      weakUnits: [
+        {
+          subject: '영어',
+          unit: '독해',
+          correctRate: 55,
+          suggestedAction: '긴 지문 읽기 연습과 핵심 파악 훈련 필요',
+        },
+        {
+          subject: '국어',
+          unit: '비문학',
+          correctRate: 60,
+          suggestedAction: '논리적 글 구조 파악 연습 권장',
+        },
+      ],
+      errorPatterns: [
+        { pattern: '문맥 파악 오류', frequency: 8, description: '지문의 전체 맥락을 놓치는 경향' },
+        { pattern: '계산 실수', frequency: 5, description: '단순 연산 과정에서의 실수' },
+      ],
+    },
+    attendanceDetails: {
+      totalDays: 5,
+      presentDays: 5,
+      absentDays: 0,
+      lateDays: 0,
+      attendanceRate: 100,
+      notes: [],
+    },
+    assignmentStatus: {
+      totalAssigned: 8,
+      completed: 7,
+      pending: 1,
+      averageScore: 82,
+      onTimeRate: 88,
+    },
+    recommendations: [
+      {
+        priority: 1,
+        type: 'concept_review',
+        title: '영어 독해 집중 훈련',
+        description: '매 수업 시작 시 10분간 짧은 영어 지문 독해 실시',
+        targetUnit: '영어 독해',
+      },
+      {
+        priority: 2,
+        type: 'practice',
+        title: '계산 실수 방지 훈련',
+        description: '검산 습관 형성을 위한 단계별 풀이 연습',
+        targetUnit: '수학 연산',
+      },
+      {
+        priority: 3,
+        type: 'challenge',
+        title: '심화 수학 문제 도전',
+        description: '기본기가 탄탄하므로 응용 문제 도전 권장',
+        targetUnit: '수학 심화',
+      },
+    ],
+    nextClassPrep: {
+      suggestedTopics: ['이차방정식 도입', '영어 독해 전략'],
+      reviewNeeded: ['일차방정식 응용', '영어 문법 기초'],
+      challengeReady: ['수학 심화 문제', '과학 실험 보고서'],
+    },
+    aiAnalysis: {
+      summary: `${student.name} 학생은 수리 영역에서 강점을 보이며, 논리적 사고력이 뛰어납니다. 언어 영역, 특히 영어 독해에서 보완이 필요하며, 꾸준한 훈련을 통해 충분히 개선 가능합니다.`,
+      keyInsights: [
+        '수학: 개념 이해도 높음, 응용력 발휘 가능',
+        '영어: 문법은 안정적, 독해는 집중 훈련 필요',
+        '학습 태도: 적극적이며 질문을 두려워하지 않음',
+      ],
+      actionItems: [
+        '다음 주부터 영어 독해 시간 10분 추가 배정',
+        '수학 심화 문제집 2단원부터 시작',
+        '월말 테스트 전 취약 단원 집중 복습 시간 확보',
+      ],
+    },
+  }
 }

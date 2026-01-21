@@ -105,9 +105,42 @@ export interface StudentListItem {
 }
 
 /**
+ * 학생 통계 요약 (UI용)
+ */
+export interface StudentStats {
+  averageScore: number;
+  trend: 'up' | 'down' | 'stable';
+  completedAssignments: number;
+  totalAssignments: number;
+  attendanceRate: number;
+  studyHours?: number;
+}
+
+/**
+ * 최근 활동
+ */
+export interface RecentActivity {
+  description: string;
+  date: string;
+  type?: 'assignment' | 'grade' | 'attendance' | 'consultation';
+}
+
+/**
+ * 취약 단원
+ */
+export interface WeakUnit {
+  name: string;
+  accuracy: number;
+  subject?: string;
+}
+
+/**
  * 학생 상세 정보 (모든 정보 포함)
  */
 export interface StudentDetail extends StudentBasicInfo {
+  // 통계 요약 (UI용)
+  stats: StudentStats;
+
   // 성적 현황
   grades: GradeSummary[];
   recentGrades: Grade[];
@@ -122,6 +155,12 @@ export interface StudentDetail extends StudentBasicInfo {
 
   // 상담 기록
   consultations: Consultation[];
+
+  // 최근 활동 (UI용)
+  recentActivities?: RecentActivity[];
+
+  // 취약 단원 (UI용)
+  weakUnits?: WeakUnit[];
 }
 
 /**

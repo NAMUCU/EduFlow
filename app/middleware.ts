@@ -88,6 +88,37 @@ function getRequiredRole(pathname: string): UserRole | null {
 }
 
 /**
+ * 개발 모드 Mock 사용자
+ * Supabase 연동 전까지 개발용으로 사용
+ */
+const DEV_MOCK_USERS: Record<string, AuthInfo['user']> = {
+  teacher: {
+    id: 'dev-teacher-001',
+    email: 'teacher@eduflow.dev',
+    name: '김선생 (개발모드)',
+    role: 'teacher',
+  },
+  admin: {
+    id: 'dev-admin-001',
+    email: 'admin@eduflow.dev',
+    name: '관리자 (개발모드)',
+    role: 'admin',
+  },
+  student: {
+    id: 'dev-student-001',
+    email: 'student@eduflow.dev',
+    name: '학생 (개발모드)',
+    role: 'student',
+  },
+  parent: {
+    id: 'dev-parent-001',
+    email: 'parent@eduflow.dev',
+    name: '학부모 (개발모드)',
+    role: 'parent',
+  },
+};
+
+/**
  * 쿠키에서 인증 정보 추출
  *
  * 현재는 로컬 스토리지 기반 Mock 인증이므로
@@ -96,6 +127,24 @@ function getRequiredRole(pathname: string): UserRole | null {
  * TODO: Supabase Auth 연동 시 supabase.auth.getSession() 사용
  */
 function getAuthFromCookie(request: NextRequest): AuthInfo {
+  // 개발 모드: 인증 없이 접근 허용 (경로에 따라 적절한 역할 부여)
+  if (process.env.NODE_ENV === 'development') {
+    const pathname = request.nextUrl.pathname;
+
+    // 경로에 따라 적절한 Mock 사용자 반환
+    if (pathname.startsWith('/admin')) {
+      return { user: DEV_MOCK_USERS.admin };
+    } else if (pathname.startsWith('/dashboard')) {
+      return { user: DEV_MOCK_USERS.teacher };
+    } else if (pathname.startsWith('/student')) {
+      return { user: DEV_MOCK_USERS.student };
+    } else if (pathname.startsWith('/parent')) {
+      return { user: DEV_MOCK_USERS.parent };
+    }
+    // 기본: 선생님
+    return { user: DEV_MOCK_USERS.teacher };
+  }
+
   try {
     // 'eduflow_auth_cookie' 쿠키에서 인증 정보 추출
     const authCookie = request.cookies.get('eduflow_auth_cookie');

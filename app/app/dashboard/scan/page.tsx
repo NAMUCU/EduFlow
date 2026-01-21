@@ -271,6 +271,7 @@ export default function ScanPage() {
     } else {
       showNotification('error', UI_TEXT.ocrError);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [images, ocrResults, showNotification, selectedProvider, selectedModel]);
 
   // 텍스트 변경 핸들러
@@ -664,6 +665,7 @@ export default function ScanPage() {
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={image.preview}
                       alt={`이미지 ${index + 1}`}

@@ -261,6 +261,7 @@ function ImageUploaderComponent({
               className="relative group aspect-square rounded-xl overflow-hidden border border-gray-200 bg-gray-50"
             >
               {/* 이미지 미리보기 */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={image.preview}
                 alt="업로드된 이미지"

@@ -411,6 +411,11 @@ export interface Database {
         Insert: RagDocumentInsert
         Update: RagDocumentUpdate
       }
+      fewshot_examples: {
+        Row: FewshotExample
+        Insert: FewshotExampleInsert
+        Update: FewshotExampleUpdate
+      }
     }
     Enums: {
       user_role: UserRole
@@ -544,8 +549,8 @@ export interface RagDocument {
   academy_id: string                // 학원 ID
   uploaded_by: string               // 업로드한 사용자 ID
   storage_path: string              // Supabase Storage 경로
-  vector_store_id: string | null    // OpenAI Vector Store ID
-  openai_file_id: string | null     // OpenAI File ID
+  file_search_store_id: string | null    // Gemini File Search Store ID
+  gemini_file_id: string | null     // Gemini File ID
   file_size: number | null          // 파일 크기 (bytes)
   page_count: number | null         // 페이지 수
   status: string                    // 상태 (processing, ready, error)
@@ -563,6 +568,39 @@ export type RagDocumentInsert = Omit<RagDocument, 'id' | 'created_at' | 'updated
 
 /** RAG 문서 수정용 타입 */
 export type RagDocumentUpdate = Partial<RagDocumentInsert>
+
+/**
+ * Few-shot 예시 (fewshot_examples)
+ * AI 문제 생성 시 참고할 예시 문제
+ */
+export interface FewshotExample {
+  id: string                        // UUID, Primary Key
+  subject: string                   // 과목 (수학, 영어, 과학 등)
+  grade: string                     // 학년 (중1, 중2, 고1 등)
+  unit: string                      // 단원명
+  difficulty: ProblemDifficulty     // 난이도
+  question: string                  // 문제 내용 (LaTeX 지원)
+  answer: string                    // 정답
+  solution: string | null           // 풀이 과정
+  tags: string[]                    // 태그 목록
+  usage_count: number               // 사용 횟수
+  is_active: boolean                // 활성화 여부
+  academy_id: string | null         // 학원 ID (null = 공용)
+  created_by: string | null         // 생성자 ID
+  created_at: string                // 생성 일시
+  updated_at: string                // 수정 일시
+}
+
+/** Few-shot 예시 삽입용 타입 */
+export type FewshotExampleInsert = Omit<FewshotExample, 'id' | 'usage_count' | 'created_at' | 'updated_at'> & {
+  id?: string
+  usage_count?: number
+  created_at?: string
+  updated_at?: string
+}
+
+/** Few-shot 예시 수정용 타입 */
+export type FewshotExampleUpdate = Partial<FewshotExampleInsert>
 
 /** 프로필 역할 한국어 라벨 */
 export const PROFILE_ROLE_LABELS: Record<ProfileRole, string> = {

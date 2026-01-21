@@ -7,7 +7,11 @@
       "academy_id": "academy-001",
       "teacher_id": "teacher-001",
       "teacher_name": "박정훈",
-      "problems": ["math-m1-unit1-001", "math-m1-unit1-002", "math-m1-unit1-003"],
+      "problems": [
+        "math-m1-unit1-001",
+        "math-m1-unit1-002",
+        "math-m1-unit1-003"
+      ],
       "due_date": "2025-01-25T23:59:00Z",
       "time_limit": 30,
       "is_active": true,
@@ -21,7 +25,11 @@
       "academy_id": "academy-001",
       "teacher_id": "teacher-001",
       "teacher_name": "박정훈",
-      "problems": ["math-m1-unit2-001", "math-m1-unit2-002", "math-m1-unit2-003"],
+      "problems": [
+        "math-m1-unit2-001",
+        "math-m1-unit2-002",
+        "math-m1-unit2-003"
+      ],
       "due_date": "2025-01-28T23:59:00Z",
       "time_limit": 45,
       "is_active": true,
@@ -35,7 +43,11 @@
       "academy_id": "academy-001",
       "teacher_id": "teacher-001",
       "teacher_name": "박정훈",
-      "problems": ["math-m1-unit3-001", "math-m1-unit3-002", "math-m1-unit3-003"],
+      "problems": [
+        "math-m1-unit3-001",
+        "math-m1-unit3-002",
+        "math-m1-unit3-003"
+      ],
       "due_date": "2025-02-01T23:59:00Z",
       "time_limit": 60,
       "is_active": true,
@@ -49,7 +61,11 @@
       "academy_id": "academy-001",
       "teacher_id": "teacher-001",
       "teacher_name": "박정훈",
-      "problems": ["math-m2-unit4-001", "math-m2-unit4-002", "math-m2-unit4-003"],
+      "problems": [
+        "math-m2-unit4-001",
+        "math-m2-unit4-002",
+        "math-m2-unit4-003"
+      ],
       "due_date": "2025-01-20T23:59:00Z",
       "time_limit": 40,
       "is_active": false,
@@ -63,7 +79,11 @@
       "academy_id": "academy-001",
       "teacher_id": "teacher-002",
       "teacher_name": "김영희",
-      "problems": ["eng-m1-unit1-001", "eng-m1-unit1-002", "eng-m1-unit1-003"],
+      "problems": [
+        "eng-m1-unit1-001",
+        "eng-m1-unit1-002",
+        "eng-m1-unit1-003"
+      ],
       "due_date": "2025-01-30T23:59:00Z",
       "time_limit": null,
       "is_active": true,
@@ -81,9 +101,24 @@
       "status": "graded",
       "score": 90,
       "answers": [
-        { "problem_id": "math-m1-unit1-001", "answer": "-5, -2.5, -1/2", "is_correct": true, "score": 30 },
-        { "problem_id": "math-m1-unit1-002", "answer": "-5", "is_correct": true, "score": 30 },
-        { "problem_id": "math-m1-unit1-003", "answer": "-75m", "is_correct": true, "score": 30 }
+        {
+          "problem_id": "math-m1-unit1-001",
+          "answer": "-5, -2.5, -1/2",
+          "is_correct": true,
+          "score": 30
+        },
+        {
+          "problem_id": "math-m1-unit1-002",
+          "answer": "-5",
+          "is_correct": true,
+          "score": 30
+        },
+        {
+          "problem_id": "math-m1-unit1-003",
+          "answer": "-75m",
+          "is_correct": true,
+          "score": 30
+        }
       ],
       "feedback": "아주 잘했어요! 음수 개념을 정확히 이해하고 있습니다.",
       "started_at": "2025-01-16T14:00:00Z",
@@ -101,9 +136,21 @@
       "status": "submitted",
       "score": null,
       "answers": [
-        { "problem_id": "math-m1-unit1-001", "answer": "-5, -2.5, -1/2", "is_correct": null },
-        { "problem_id": "math-m1-unit1-002", "answer": "-10", "is_correct": null },
-        { "problem_id": "math-m1-unit1-003", "answer": "-75m", "is_correct": null }
+        {
+          "problem_id": "math-m1-unit1-001",
+          "answer": "-5, -2.5, -1/2",
+          "is_correct": null
+        },
+        {
+          "problem_id": "math-m1-unit1-002",
+          "answer": "-10",
+          "is_correct": null
+        },
+        {
+          "problem_id": "math-m1-unit1-003",
+          "answer": "-75m",
+          "is_correct": null
+        }
       ],
       "feedback": null,
       "started_at": "2025-01-17T10:00:00Z",
@@ -121,7 +168,11 @@
       "status": "in_progress",
       "score": null,
       "answers": [
-        { "problem_id": "math-m1-unit1-001", "answer": "-5, -2.5, -1/2", "is_correct": null }
+        {
+          "problem_id": "math-m1-unit1-001",
+          "answer": "-5, -2.5, -1/2",
+          "is_correct": null
+        }
       ],
       "feedback": null,
       "started_at": "2025-01-18T16:00:00Z",
@@ -152,15 +203,15 @@
       "student_id": "student-001",
       "student_name": "김민준",
       "student_grade": "중1",
-      "status": "not_started",
+      "status": "in_progress",
       "score": null,
       "answers": null,
       "feedback": null,
-      "started_at": null,
+      "started_at": "2026-01-21T00:26:27.270Z",
       "submitted_at": null,
       "graded_at": null,
       "created_at": "2025-01-16T09:00:00Z",
-      "updated_at": "2025-01-16T09:00:00Z"
+      "updated_at": "2026-01-21T00:26:27.270Z"
     },
     {
       "id": "sa-006",
@@ -171,7 +222,11 @@
       "status": "in_progress",
       "score": null,
       "answers": [
-        { "problem_id": "math-m1-unit2-001", "answer": "4a", "is_correct": null }
+        {
+          "problem_id": "math-m1-unit2-001",
+          "answer": "4a",
+          "is_correct": null
+        }
       ],
       "feedback": null,
       "started_at": "2025-01-19T14:00:00Z",
@@ -189,9 +244,24 @@
       "status": "graded",
       "score": 85,
       "answers": [
-        { "problem_id": "math-m2-unit4-001", "answer": "x = 3, y = 5", "is_correct": true, "score": 30 },
-        { "problem_id": "math-m2-unit4-002", "answer": "x = 4, y = 0", "is_correct": true, "score": 30 },
-        { "problem_id": "math-m2-unit4-003", "answer": "사과 700원, 배 900원", "is_correct": false, "score": 25 }
+        {
+          "problem_id": "math-m2-unit4-001",
+          "answer": "x = 3, y = 5",
+          "is_correct": true,
+          "score": 30
+        },
+        {
+          "problem_id": "math-m2-unit4-002",
+          "answer": "x = 4, y = 0",
+          "is_correct": true,
+          "score": 30
+        },
+        {
+          "problem_id": "math-m2-unit4-003",
+          "answer": "사과 700원, 배 900원",
+          "is_correct": false,
+          "score": 25
+        }
       ],
       "feedback": "연립방정식 풀이는 잘했어요. 문장제 문제는 다시 한번 계산해보세요.",
       "started_at": "2025-01-12T15:00:00Z",
@@ -209,9 +279,24 @@
       "status": "graded",
       "score": 100,
       "answers": [
-        { "problem_id": "math-m2-unit4-001", "answer": "x = 3, y = 5", "is_correct": true, "score": 33 },
-        { "problem_id": "math-m2-unit4-002", "answer": "x = 4, y = 0", "is_correct": true, "score": 33 },
-        { "problem_id": "math-m2-unit4-003", "answer": "사과 700원, 배 1000원", "is_correct": true, "score": 34 }
+        {
+          "problem_id": "math-m2-unit4-001",
+          "answer": "x = 3, y = 5",
+          "is_correct": true,
+          "score": 33
+        },
+        {
+          "problem_id": "math-m2-unit4-002",
+          "answer": "x = 4, y = 0",
+          "is_correct": true,
+          "score": 33
+        },
+        {
+          "problem_id": "math-m2-unit4-003",
+          "answer": "사과 700원, 배 1000원",
+          "is_correct": true,
+          "score": 34
+        }
       ],
       "feedback": "완벽해요! 모든 문제를 정확하게 풀었습니다.",
       "started_at": "2025-01-11T10:00:00Z",
@@ -301,21 +386,30 @@
       "name": "중1 A반",
       "grade": "중1",
       "academy_id": "academy-001",
-      "student_ids": ["student-001", "student-002", "student-003"]
+      "student_ids": [
+        "student-001",
+        "student-002",
+        "student-003"
+      ]
     },
     {
       "id": "class-002",
       "name": "중1 B반",
       "grade": "중1",
       "academy_id": "academy-001",
-      "student_ids": ["student-004"]
+      "student_ids": [
+        "student-004"
+      ]
     },
     {
       "id": "class-003",
       "name": "중2 A반",
       "grade": "중2",
       "academy_id": "academy-001",
-      "student_ids": ["student-005", "student-006"]
+      "student_ids": [
+        "student-005",
+        "student-006"
+      ]
     }
   ]
 }

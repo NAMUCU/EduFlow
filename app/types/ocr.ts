@@ -145,8 +145,8 @@ export const OCR_PROVIDERS: OcrProviderInfo[] = [
   },
 ];
 
-// 기본 모델 설정
-export const DEFAULT_OCR_MODEL: OcrModel = CLAUDE_MODELS[0]; // Claude Haiku 3.5
+// 기본 모델 설정 - Claude Sonnet 4.5 (OCR + 풀이 분석 + 정리 통합)
+export const DEFAULT_OCR_MODEL: OcrModel = CLAUDE_MODELS[2]; // Claude Sonnet 4.5
 
 // OCR 요청 타입
 export interface OcrRequest {

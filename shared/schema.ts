@@ -115,7 +115,7 @@ export const submissionsRelations = relations(submissions, ({ one }) => ({
 
 // Insert schemas
 export const insertProfileSchema = createInsertSchema(profiles).omit({ createdAt: true });
-export const insertStudentSchema = createInsertSchema(students).omit({ id: true, createdAt: true });
+export const insertStudentSchema = createInsertSchema(students).omit({ id: true, inviteCode: true, createdAt: true });
 export const insertProblemSchema = createInsertSchema(problems).omit({ id: true, createdAt: true });
 export const insertProblemSetSchema = createInsertSchema(problemSets).omit({ id: true, createdAt: true });
 export const insertAssignmentSchema = createInsertSchema(assignments).omit({ id: true, createdAt: true });

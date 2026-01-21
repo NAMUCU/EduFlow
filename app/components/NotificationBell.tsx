@@ -1,13 +1,25 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { Bell, Check, Trash2, ExternalLink } from 'lucide-react';
+/**
+ * 알림 벨 컴포넌트
+ *
+ * 기능:
+ * - 알림 벨 아이콘
+ * - 읽지 않은 알림 뱃지
+ * - 드롭다운 알림 목록
+ * - 실시간 알림 수신 (Supabase Realtime)
+ */
+
+import { useState, useRef, useEffect, useCallback, memo } from 'react';
+import { Bell, Check, Trash2, ExternalLink, Settings, X, Wifi, WifiOff } from 'lucide-react';
 import Link from 'next/link';
 import {
   Notification,
   NotificationType,
   NOTIFICATION_TYPE_LABELS,
 } from '@/types/notification';
+import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
+import { markNotificationAsRead, deleteNotification } from '@/hooks/useNotifications';
 
 // 알림 유형별 아이콘 색상
 const NOTIFICATION_TYPE_COLORS: Record<NotificationType, string> = {
@@ -20,157 +32,262 @@ const NOTIFICATION_TYPE_COLORS: Record<NotificationType, string> = {
 
 // 알림 유형별 아이콘
 const NOTIFICATION_TYPE_ICONS: Record<NotificationType, string> = {
-  assignment: '📝',
-  grade: '📊',
-  attendance: '📅',
-  notice: '📢',
-  system: '⚙️',
+  assignment: '!',
+  grade: '%',
+  attendance: 'A',
+  notice: 'N',
+  system: 'S',
 };
 
 interface NotificationBellProps {
   userId?: string;
+  maxItems?: number;
 }
 
-export default function NotificationBell({ userId = 'user-001' }: NotificationBellProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+// 개별 알림 아이템 컴포넌트
+interface NotificationItemProps {
+  notification: Notification;
+  onMarkAsRead: (id: string) => void;
+  onDelete: (id: string) => void;
+  onClose: () => void;
+  isLoading: boolean;
+}
 
-  // 알림 목록 조회
-  const fetchNotifications = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch(`/api/notifications?user_id=${userId}&page_size=10`);
-      const result = await response.json();
-
-      if (result.success) {
-        setNotifications(result.data.notifications);
-        setUnreadCount(result.data.unreadCount);
-      }
-    } catch (error) {
-      console.error('알림 조회 오류:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [userId]);
-
-  // 컴포넌트 마운트 시 알림 조회
-  useEffect(() => {
-    fetchNotifications();
-
-    // 30초마다 알림 갱신 (폴링)
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
-  }, [fetchNotifications]);
-
-  // 드롭다운 외부 클릭 시 닫기
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // 알림 읽음 처리
-  const handleMarkAsRead = async (notificationId: string, event: React.MouseEvent) => {
-    event.stopPropagation();
-    try {
-      const response = await fetch(`/api/notifications/${notificationId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isRead: true }),
-      });
-
-      if (response.ok) {
-        setNotifications((prev) =>
-          prev.map((n) =>
-            n.id === notificationId ? { ...n, isRead: true } : n
-          )
-        );
-        setUnreadCount((prev) => Math.max(0, prev - 1));
-      }
-    } catch (error) {
-      console.error('읽음 처리 오류:', error);
-    }
-  };
-
-  // 알림 삭제
-  const handleDelete = async (notificationId: string, event: React.MouseEvent) => {
-    event.stopPropagation();
-    try {
-      const response = await fetch(`/api/notifications/${notificationId}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        const deletedNotification = notifications.find((n) => n.id === notificationId);
-        setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
-        if (deletedNotification && !deletedNotification.isRead) {
-          setUnreadCount((prev) => Math.max(0, prev - 1));
-        }
-      }
-    } catch (error) {
-      console.error('삭제 오류:', error);
-    }
-  };
-
-  // 모두 읽음 처리
-  const handleMarkAllAsRead = async () => {
-    try {
-      const response = await fetch('/api/notifications/read-all', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId }),
-      });
-
-      if (response.ok) {
-        setNotifications((prev) =>
-          prev.map((n) => ({ ...n, isRead: true }))
-        );
-        setUnreadCount(0);
-      }
-    } catch (error) {
-      console.error('모두 읽음 처리 오류:', error);
-    }
-  };
-
-  // 시간 포맷팅 (상대 시간)
-  const formatTime = (dateString: string) => {
+const NotificationItem = memo(function NotificationItem({
+  notification,
+  onMarkAsRead,
+  onDelete,
+  onClose,
+  isLoading,
+}: NotificationItemProps) {
+  // 상대 시간 포맷팅
+  const formatRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
-    const diff = now.getTime() - date.getTime();
+    const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
+    if (diff < 60) return '방금 전';
+    if (diff < 3600) return `${Math.floor(diff / 60)}분 전`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`;
+    if (diff < 604800) return `${Math.floor(diff / 86400)}일 전`;
+    return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+  };
 
-    if (minutes < 1) return '방금 전';
-    if (minutes < 60) return `${minutes}분 전`;
-    if (hours < 24) return `${hours}시간 전`;
-    if (days < 7) return `${days}일 전`;
-    return date.toLocaleDateString('ko-KR', {
-      month: 'short',
-      day: 'numeric',
-    });
+  const handleClick = () => {
+    if (!notification.isRead) {
+      onMarkAsRead(notification.id);
+    }
+    if (notification.link) {
+      onClose();
+    }
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDelete(notification.id);
+  };
+
+  const content = (
+    <div
+      className={`flex gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+        !notification.isRead
+          ? 'bg-blue-50 hover:bg-blue-100'
+          : 'hover:bg-gray-50'
+      } ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}
+      onClick={handleClick}
+    >
+      {/* 아이콘 */}
+      <div
+        className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg text-sm font-bold ${
+          NOTIFICATION_TYPE_COLORS[notification.type]
+        }`}
+      >
+        {NOTIFICATION_TYPE_ICONS[notification.type]}
+      </div>
+
+      {/* 내용 */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            {/* 제목 */}
+            <p
+              className={`text-sm truncate ${
+                !notification.isRead ? 'font-semibold text-gray-900' : 'text-gray-700'
+              }`}
+            >
+              {notification.title}
+            </p>
+
+            {/* 메시지 */}
+            <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+              {notification.message}
+            </p>
+
+            {/* 메타 */}
+            <div className="flex items-center gap-2 mt-1">
+              <span
+                className={`inline-flex items-center px-1.5 py-0.5 text-[10px] rounded ${
+                  NOTIFICATION_TYPE_COLORS[notification.type]
+                }`}
+              >
+                {NOTIFICATION_TYPE_LABELS[notification.type]}
+              </span>
+              <span className="text-[10px] text-gray-400">
+                {formatRelativeTime(notification.createdAt)}
+              </span>
+            </div>
+          </div>
+
+          {/* 삭제 버튼 */}
+          <button
+            onClick={handleDelete}
+            className="flex-shrink-0 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+            title="삭제"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (notification.link) {
+    return <Link href={notification.link}>{content}</Link>;
+  }
+
+  return content;
+});
+
+// 메인 컴포넌트
+export default function NotificationBell({
+  userId = 'user-001',
+  maxItems = 5,
+}: NotificationBellProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // 실시간 알림 훅 사용
+  const {
+    notifications,
+    unreadCount,
+    connectionStatus,
+    isLoading,
+  } = useRealtimeNotifications(userId, { maxItems: maxItems * 2 });
+
+  // 드롭다운에 표시할 알림 (최신 maxItems개)
+  const displayNotifications = notifications.slice(0, maxItems);
+
+  // 외부 클릭 시 드롭다운 닫기
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isOpen]);
+
+  // ESC 키로 닫기
+  useEffect(() => {
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape' && isOpen) {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isOpen]);
+
+  // 토글
+  const toggleDropdown = useCallback(() => {
+    setIsOpen((prev) => !prev);
+  }, []);
+
+  // 닫기
+  const closeDropdown = useCallback(() => {
+    setIsOpen(false);
+  }, []);
+
+  // 읽음 처리
+  const handleMarkAsRead = useCallback(async (id: string) => {
+    setActionLoading(id);
+    try {
+      await markNotificationAsRead(id);
+    } finally {
+      setActionLoading(null);
+    }
+  }, []);
+
+  // 삭제 처리
+  const handleDelete = useCallback(async (id: string) => {
+    setActionLoading(id);
+    try {
+      await deleteNotification(id);
+    } finally {
+      setActionLoading(null);
+    }
+  }, []);
+
+  // 연결 상태 아이콘
+  const renderConnectionStatus = () => {
+    switch (connectionStatus) {
+      case 'connected':
+        return (
+          <div className="flex items-center gap-1 text-green-600" title="실시간 연결됨">
+            <Wifi className="w-3 h-3" />
+          </div>
+        );
+      case 'connecting':
+        return (
+          <div className="flex items-center gap-1 text-yellow-600" title="연결 중...">
+            <div className="w-3 h-3 border-2 border-yellow-600 border-t-transparent rounded-full animate-spin" />
+          </div>
+        );
+      case 'error':
+        return (
+          <div className="flex items-center gap-1 text-red-600" title="연결 오류">
+            <WifiOff className="w-3 h-3" />
+          </div>
+        );
+      default:
+        return (
+          <div className="flex items-center gap-1 text-gray-400" title="연결 안됨">
+            <WifiOff className="w-3 h-3" />
+          </div>
+        );
+    }
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
-      {/* 알림 벨 버튼 */}
+    <div className="relative">
+      {/* 벨 버튼 */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        aria-label={`알림 ${unreadCount > 0 ? `(읽지 않은 알림 ${unreadCount}개)` : ''}`}
+        ref={buttonRef}
+        onClick={toggleDropdown}
+        className={`relative p-2 rounded-lg transition-colors ${
+          isOpen
+            ? 'bg-primary-100 text-primary-600'
+            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+        }`}
+        aria-label={`알림 ${unreadCount > 0 ? `(${unreadCount}개 읽지 않음)` : ''}`}
       >
-        <Bell className="w-5 h-5 text-gray-600" />
+        <Bell className="w-5 h-5" />
+
+        {/* 읽지 않은 알림 뱃지 */}
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-xs font-bold text-white bg-red-500 rounded-full">
+          <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-500 rounded-full">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
@@ -178,152 +295,76 @@ export default function NotificationBell({ userId = 'user-001' }: NotificationBe
 
       {/* 드롭다운 */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-96 bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden">
+        <div
+          ref={dropdownRef}
+          className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden z-50"
+        >
           {/* 헤더 */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50">
-            <h3 className="font-semibold text-gray-900">알림</h3>
             <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-gray-900">알림</h3>
               {unreadCount > 0 && (
-                <button
-                  onClick={handleMarkAllAsRead}
-                  className="text-xs text-primary-600 hover:text-primary-700 font-medium"
-                >
-                  모두 읽음
-                </button>
+                <span className="px-2 py-0.5 text-xs font-medium text-primary-600 bg-primary-100 rounded-full">
+                  {unreadCount}개
+                </span>
               )}
-              <Link
-                href="/dashboard/notifications"
-                className="text-xs text-gray-500 hover:text-gray-700"
-                onClick={() => setIsOpen(false)}
+            </div>
+            <div className="flex items-center gap-2">
+              {renderConnectionStatus()}
+              <button
+                onClick={closeDropdown}
+                className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded transition-colors"
               >
-                전체 보기
-              </Link>
+                <X className="w-4 h-4" />
+              </button>
             </div>
           </div>
 
           {/* 알림 목록 */}
-          <div className="max-h-96 overflow-y-auto">
-            {isLoading ? (
+          <div className="max-h-[400px] overflow-y-auto">
+            {isLoading && notifications.length === 0 ? (
               <div className="flex items-center justify-center py-8">
                 <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
               </div>
-            ) : notifications.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-gray-500">
-                <Bell className="w-10 h-10 mb-2 text-gray-300" />
-                <p className="text-sm">알림이 없습니다</p>
+            ) : displayNotifications.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+                <Bell className="w-12 h-12 mb-3 text-gray-300" />
+                <p className="text-sm font-medium">새 알림이 없습니다</p>
               </div>
             ) : (
-              <ul className="divide-y divide-gray-100">
-                {notifications.map((notification) => (
-                  <li
+              <div className="p-2 space-y-1">
+                {displayNotifications.map((notification) => (
+                  <NotificationItem
                     key={notification.id}
-                    className={`relative hover:bg-gray-50 transition-colors ${
-                      !notification.isRead ? 'bg-blue-50/50' : ''
-                    }`}
-                  >
-                    <div className="flex gap-3 px-4 py-3">
-                      {/* 아이콘 */}
-                      <div
-                        className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full ${
-                          NOTIFICATION_TYPE_COLORS[notification.type]
-                        }`}
-                      >
-                        <span className="text-lg">
-                          {NOTIFICATION_TYPE_ICONS[notification.type]}
-                        </span>
-                      </div>
-
-                      {/* 내용 */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <p
-                              className={`text-sm truncate ${
-                                !notification.isRead
-                                  ? 'font-semibold text-gray-900'
-                                  : 'font-medium text-gray-700'
-                              }`}
-                            >
-                              {notification.title}
-                            </p>
-                            <p className="text-xs text-gray-500 line-clamp-2 mt-0.5">
-                              {notification.message}
-                            </p>
-                          </div>
-
-                          {/* 액션 버튼 */}
-                          <div className="flex items-center gap-1 flex-shrink-0">
-                            {!notification.isRead && (
-                              <button
-                                onClick={(e) => handleMarkAsRead(notification.id, e)}
-                                className="p-1 hover:bg-gray-200 rounded transition-colors"
-                                title="읽음 처리"
-                              >
-                                <Check className="w-4 h-4 text-gray-400" />
-                              </button>
-                            )}
-                            <button
-                              onClick={(e) => handleDelete(notification.id, e)}
-                              className="p-1 hover:bg-gray-200 rounded transition-colors"
-                              title="삭제"
-                            >
-                              <Trash2 className="w-4 h-4 text-gray-400" />
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* 메타 정보 */}
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-xs text-gray-400">
-                            {formatTime(notification.createdAt)}
-                          </span>
-                          <span
-                            className={`text-xs px-1.5 py-0.5 rounded ${
-                              NOTIFICATION_TYPE_COLORS[notification.type]
-                            }`}
-                          >
-                            {NOTIFICATION_TYPE_LABELS[notification.type]}
-                          </span>
-                          {notification.link && (
-                            <Link
-                              href={notification.link}
-                              onClick={() => {
-                                setIsOpen(false);
-                                if (!notification.isRead) {
-                                  handleMarkAsRead(notification.id, { stopPropagation: () => {} } as React.MouseEvent);
-                                }
-                              }}
-                              className="text-xs text-primary-600 hover:text-primary-700 flex items-center gap-0.5"
-                            >
-                              바로가기 <ExternalLink className="w-3 h-3" />
-                            </Link>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* 읽지 않음 표시 */}
-                      {!notification.isRead && (
-                        <div className="absolute left-1.5 top-1/2 -translate-y-1/2 w-2 h-2 bg-primary-500 rounded-full" />
-                      )}
-                    </div>
-                  </li>
+                    notification={notification}
+                    onMarkAsRead={handleMarkAsRead}
+                    onDelete={handleDelete}
+                    onClose={closeDropdown}
+                    isLoading={actionLoading === notification.id}
+                  />
                 ))}
-              </ul>
+              </div>
             )}
           </div>
 
           {/* 푸터 */}
-          {notifications.length > 0 && (
-            <div className="border-t border-gray-100 px-4 py-2 bg-gray-50">
-              <Link
-                href="/dashboard/notifications"
-                className="block text-center text-sm text-primary-600 hover:text-primary-700 font-medium"
-                onClick={() => setIsOpen(false)}
-              >
-                전체 알림 보기
-              </Link>
-            </div>
-          )}
+          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50">
+            <Link
+              href="/dashboard/notifications"
+              onClick={closeDropdown}
+              className="text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors"
+            >
+              모든 알림 보기
+            </Link>
+            <Link
+              href="/dashboard/settings#notifications"
+              onClick={closeDropdown}
+              className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded transition-colors"
+              title="알림 설정"
+            >
+              <Settings className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
       )}
     </div>

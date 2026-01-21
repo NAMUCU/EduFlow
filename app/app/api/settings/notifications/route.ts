@@ -3,6 +3,11 @@
  *
  * GET: 알림 설정 조회
  * PUT: 알림 설정 수정
+ *
+ * 기능:
+ * - 알림 채널 설정 (이메일, SMS, 푸시, 카카오톡)
+ * - 알림 유형별 On/Off
+ * - 알림 수신 시간대 설정
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -12,17 +17,45 @@ import type {
   NotificationSettings,
   NotificationUpdateRequest,
   SettingsResponse,
-  DEFAULT_NOTIFICATION_CHANNELS,
-  DEFAULT_NOTIFICATION_TYPES,
 } from '@/types/settings'
 
 // Mock 데이터 파일 경로 (실제로는 Supabase 사용)
 const DATA_FILE_PATH = path.join(process.cwd(), 'data', 'notification-settings.json')
 
+/** 확장된 알림 채널 (카카오톡 포함) */
+interface ExtendedNotificationChannels {
+  email: boolean
+  sms: boolean
+  push: boolean
+  kakao: boolean
+}
+
+/** 알림 시간 설정 */
+interface NotificationTimeSettings {
+  enabled: boolean
+  startTime: string
+  endTime: string
+  timezone: string
+}
+
+/** 확장된 알림 설정 */
+interface ExtendedNotificationSettings extends Omit<NotificationSettings, 'channels'> {
+  channels: ExtendedNotificationChannels
+  timeSettings?: NotificationTimeSettings
+}
+
 interface NotificationSettingsStore {
   version: string
-  settings: Record<string, NotificationSettings>
+  settings: Record<string, ExtendedNotificationSettings>
   lastModified: string
+}
+
+/** 기본 시간 설정 */
+const DEFAULT_TIME_SETTINGS: NotificationTimeSettings = {
+  enabled: false,
+  startTime: '09:00',
+  endTime: '21:00',
+  timezone: 'Asia/Seoul',
 }
 
 /**
@@ -45,6 +78,7 @@ async function readNotificationData(): Promise<NotificationSettingsStore> {
             email: true,
             sms: true,
             push: false,
+            kakao: true,
           },
           types: {
             reportReminder: true,
@@ -53,6 +87,7 @@ async function readNotificationData(): Promise<NotificationSettingsStore> {
             consultationReminder: true,
             systemNotice: true,
           },
+          timeSettings: DEFAULT_TIME_SETTINGS,
           updatedAt: now,
         },
       },
@@ -102,6 +137,7 @@ export async function GET() {
           email: true,
           sms: true,
           push: false,
+          kakao: true,
         },
         types: {
           reportReminder: true,
@@ -110,13 +146,14 @@ export async function GET() {
           consultationReminder: true,
           systemNotice: true,
         },
+        timeSettings: DEFAULT_TIME_SETTINGS,
         updatedAt: now,
       }
       store.settings[userId] = settings
       await writeNotificationData(store)
     }
 
-    return NextResponse.json<SettingsResponse<NotificationSettings>>({
+    return NextResponse.json<SettingsResponse<ExtendedNotificationSettings>>({
       success: true,
       data: settings,
     })
@@ -136,27 +173,37 @@ export async function GET() {
 /**
  * PUT: 알림 설정 수정
  *
- * Request Body: NotificationUpdateRequest
- * - channels?: Partial<NotificationChannels>
+ * Request Body:
+ * - channels?: Partial<ExtendedNotificationChannels>
  *   - email?: boolean
  *   - sms?: boolean
  *   - push?: boolean
+ *   - kakao?: boolean
  * - types?: Partial<NotificationTypes>
  *   - reportReminder?: boolean
  *   - assignmentReminder?: boolean
  *   - gradeUpdate?: boolean
  *   - consultationReminder?: boolean
  *   - systemNotice?: boolean
+ * - timeSettings?: Partial<NotificationTimeSettings>
+ *   - enabled?: boolean
+ *   - startTime?: string (HH:mm)
+ *   - endTime?: string (HH:mm)
+ *   - timezone?: string
  */
 export async function PUT(request: NextRequest) {
   try {
     // TODO: 세션에서 사용자 ID 가져오기
     const userId = 'mock-user-1'
 
-    const body: NotificationUpdateRequest = await request.json()
+    const body = await request.json() as {
+      channels?: Partial<ExtendedNotificationChannels>
+      types?: Partial<NotificationSettings['types']>
+      timeSettings?: Partial<NotificationTimeSettings>
+    }
 
     // 업데이트할 내용이 없는 경우
-    if (!body.channels && !body.types) {
+    if (!body.channels && !body.types && !body.timeSettings) {
       return NextResponse.json<SettingsResponse<null>>(
         {
           success: false,
@@ -165,6 +212,30 @@ export async function PUT(request: NextRequest) {
         },
         { status: 400 }
       )
+    }
+
+    // 시간 설정 유효성 검사
+    if (body.timeSettings?.enabled) {
+      const startTime = body.timeSettings.startTime
+      const endTime = body.timeSettings.endTime
+
+      if (startTime && endTime) {
+        const [startHour, startMin] = startTime.split(':').map(Number)
+        const [endHour, endMin] = endTime.split(':').map(Number)
+        const startMinutes = startHour * 60 + startMin
+        const endMinutes = endHour * 60 + endMin
+
+        if (startMinutes >= endMinutes) {
+          return NextResponse.json<SettingsResponse<null>>(
+            {
+              success: false,
+              error: '알림 시작 시간은 종료 시간보다 이전이어야 합니다.',
+              code: 'INVALID_TIME_RANGE',
+            },
+            { status: 400 }
+          )
+        }
+      }
     }
 
     const store = await readNotificationData()
@@ -180,6 +251,7 @@ export async function PUT(request: NextRequest) {
           email: true,
           sms: true,
           push: false,
+          kakao: true,
         },
         types: {
           reportReminder: true,
@@ -188,6 +260,7 @@ export async function PUT(request: NextRequest) {
           consultationReminder: true,
           systemNotice: true,
         },
+        timeSettings: DEFAULT_TIME_SETTINGS,
         updatedAt: now,
       }
     }
@@ -208,11 +281,19 @@ export async function PUT(request: NextRequest) {
       }
     }
 
+    // 시간 설정 업데이트
+    if (body.timeSettings) {
+      settings.timeSettings = {
+        ...(settings.timeSettings || DEFAULT_TIME_SETTINGS),
+        ...body.timeSettings,
+      }
+    }
+
     settings.updatedAt = new Date().toISOString()
     store.settings[userId] = settings
     await writeNotificationData(store)
 
-    return NextResponse.json<SettingsResponse<NotificationSettings>>({
+    return NextResponse.json<SettingsResponse<ExtendedNotificationSettings>>({
       success: true,
       data: settings,
     })

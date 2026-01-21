@@ -60,7 +60,15 @@ export default function Sidebar() {
       {/* 메인 메뉴 */}
       <nav className="flex-1 p-4 space-y-1">
         {menuItems.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+          // 정확한 경로 매칭: 하위 경로가 있는 메뉴는 정확히 일치할 때만 활성화
+          // 예: /dashboard/problems와 /dashboard/problems/saved가 둘 다 메뉴에 있으면
+          // /dashboard/problems/saved 방문 시 /dashboard/problems는 비활성화
+          const hasChildInMenu = menuItems.some(
+            (other) => other.href !== item.href && other.href.startsWith(item.href + '/')
+          )
+          const isActive = hasChildInMenu
+            ? pathname === item.href
+            : pathname === item.href || pathname.startsWith(item.href + '/')
           return (
             <Link
               key={item.href}

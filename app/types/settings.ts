@@ -126,6 +126,71 @@ export interface AISettings {
 }
 
 // ============================================
+// API 키 관리 타입
+// ============================================
+
+/** API 키 설정 */
+export interface ApiKeySettings {
+  geminiKey: string | null      // Gemini API 키
+  anthropicKey: string | null   // Anthropic (Claude) API 키
+  openaiKey: string | null      // OpenAI API 키
+  googleVisionKey: string | null // Google Cloud Vision API 키 (OCR용)
+  pdfcoKey: string | null       // PDF.co API 키 (PDF 변환용)
+}
+
+/** API 키 설정 수정 요청 타입 */
+export interface ApiKeyUpdateRequest {
+  geminiKey?: string | null
+  anthropicKey?: string | null
+  openaiKey?: string | null
+  googleVisionKey?: string | null
+  pdfcoKey?: string | null
+}
+
+/** API 키 유효성 검증 결과 */
+export interface ApiKeyValidationResult {
+  geminiKey: boolean
+  anthropicKey: boolean
+  openaiKey: boolean
+  googleVisionKey: boolean
+  pdfcoKey: boolean
+}
+
+// ============================================
+// 모델 설정 타입
+// ============================================
+
+/** 채팅 모델 옵션 */
+export type ChatModel =
+  | 'gemini-2.0-flash'
+  | 'gemini-2.0-pro'
+  | 'gpt-4o'
+  | 'gpt-4o-mini'
+  | 'claude-3-5-sonnet'
+  | 'claude-3-opus'
+
+/** 비전 모델 옵션 (OCR 후처리 및 이미지 분석용) */
+export type VisionModel =
+  | 'gemini-2.0-flash'
+  | 'gemini-2.0-pro'
+  | 'gpt-4o'
+  | 'claude-3-5-sonnet'
+
+/** 모델 설정 */
+export interface ModelSettings {
+  chatModel: ChatModel          // 기본 채팅/생성 모델
+  visionModel: VisionModel      // 비전/이미지 분석 모델
+  embeddingModel: 'text-embedding-3-small' | 'text-embedding-3-large' // 임베딩 모델 (RAG용)
+}
+
+/** 모델 설정 수정 요청 타입 */
+export interface ModelSettingsUpdateRequest {
+  chatModel?: ChatModel
+  visionModel?: VisionModel
+  embeddingModel?: 'text-embedding-3-small' | 'text-embedding-3-large'
+}
+
+// ============================================
 // 테마 설정 타입
 // ============================================
 
@@ -147,6 +212,8 @@ export interface UserSettings {
   notifications: NotificationSettings
   ai: AISettings
   appearance: AppearanceSettings
+  apiKeys: ApiKeySettings       // API 키 설정
+  models: ModelSettings         // 모델 설정
 }
 
 // ============================================
@@ -189,6 +256,33 @@ export const AI_MODEL_LABELS: Record<AIModel, string> = {
   gemini: 'Gemini 3.0 Pro',
   gpt: 'GPT-4',
   claude: 'Claude 3',
+}
+
+/** 채팅 모델 한국어 라벨 */
+export const CHAT_MODEL_LABELS: Record<ChatModel, { label: string; description: string; provider: AIModel }> = {
+  'gemini-2.0-flash': { label: 'Gemini 2.0 Flash', description: '빠른 응답 속도, 일반 작업에 적합', provider: 'gemini' },
+  'gemini-2.0-pro': { label: 'Gemini 2.0 Pro', description: '고품질 응답, 복잡한 문제 생성에 적합', provider: 'gemini' },
+  'gpt-4o': { label: 'GPT-4o', description: 'OpenAI 최신 모델, 뛰어난 성능', provider: 'gpt' },
+  'gpt-4o-mini': { label: 'GPT-4o Mini', description: '빠르고 경제적인 모델', provider: 'gpt' },
+  'claude-3-5-sonnet': { label: 'Claude 3.5 Sonnet', description: '균형 잡힌 성능과 속도', provider: 'claude' },
+  'claude-3-opus': { label: 'Claude 3 Opus', description: '최고 품질의 응답, 심층 분석에 적합', provider: 'claude' },
+}
+
+/** 비전 모델 한국어 라벨 */
+export const VISION_MODEL_LABELS: Record<VisionModel, { label: string; description: string; provider: AIModel }> = {
+  'gemini-2.0-flash': { label: 'Gemini 2.0 Flash', description: '빠른 이미지 분석', provider: 'gemini' },
+  'gemini-2.0-pro': { label: 'Gemini 2.0 Pro', description: '정밀한 이미지 분석', provider: 'gemini' },
+  'gpt-4o': { label: 'GPT-4o', description: '멀티모달 분석 지원', provider: 'gpt' },
+  'claude-3-5-sonnet': { label: 'Claude 3.5 Sonnet', description: '정확한 이미지 인식', provider: 'claude' },
+}
+
+/** API 키 한국어 라벨 */
+export const API_KEY_LABELS: Record<keyof ApiKeySettings, { label: string; description: string; required: boolean }> = {
+  geminiKey: { label: 'Gemini API 키', description: 'Google AI Studio에서 발급받은 API 키', required: true },
+  anthropicKey: { label: 'Anthropic API 키', description: 'Anthropic Console에서 발급받은 API 키', required: false },
+  openaiKey: { label: 'OpenAI API 키', description: 'OpenAI Platform에서 발급받은 API 키', required: false },
+  googleVisionKey: { label: 'Google Vision API 키', description: 'Google Cloud Console에서 발급받은 API 키 (OCR용)', required: true },
+  pdfcoKey: { label: 'PDF.co API 키', description: 'PDF.co에서 발급받은 API 키 (PDF 변환용)', required: false },
 }
 
 /** 테마 한국어 라벨 */
@@ -250,6 +344,22 @@ export const DEFAULT_AI_SETTINGS: AISettings = {
   generationModel: 'gemini',
   autoReview: true,
   reviewModels: ['gemini', 'gpt'],
+}
+
+/** 기본 API 키 설정 */
+export const DEFAULT_API_KEY_SETTINGS: ApiKeySettings = {
+  geminiKey: null,
+  anthropicKey: null,
+  openaiKey: null,
+  googleVisionKey: null,
+  pdfcoKey: null,
+}
+
+/** 기본 모델 설정 */
+export const DEFAULT_MODEL_SETTINGS: ModelSettings = {
+  chatModel: 'gemini-2.0-flash',
+  visionModel: 'gemini-2.0-flash',
+  embeddingModel: 'text-embedding-3-small',
 }
 
 // ============================================

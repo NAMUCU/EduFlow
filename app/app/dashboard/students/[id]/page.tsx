@@ -23,14 +23,12 @@ import {
   Calendar,
   GraduationCap,
   BookOpen,
-  TrendingUp,
-  TrendingDown,
-  Minus,
   AlertCircle,
   MessageSquare,
   FileText,
   BarChart3,
   CalendarDays,
+  AlertTriangle,
 } from 'lucide-react';
 import {
   StudentDetail,
@@ -42,14 +40,15 @@ import { useStudentDetail, preloadStudentData } from '@/hooks/useStudentDetail';
 // 탭 타입 정의
 // ============================================
 
-type TabType = 'overview' | 'grades' | 'assignments' | 'attendance' | 'consultations';
+type TabType = 'overview' | 'grades' | 'assignments' | 'attendance' | 'consultations' | 'weakness';
 
-const TAB_OPTIONS: { id: TabType; label: string; icon: React.ReactNode; dataType?: 'grades' | 'assignments' | 'attendance' | 'consultations' }[] = [
+const TAB_OPTIONS: { id: TabType; label: string; icon: React.ReactNode; dataType?: 'grades' | 'assignments' | 'attendance' | 'consultations' | 'weakness' }[] = [
   { id: 'overview', label: '개요', icon: <BarChart3 className="w-4 h-4" /> },
   { id: 'grades', label: '성적', icon: <FileText className="w-4 h-4" />, dataType: 'grades' },
   { id: 'assignments', label: '과제', icon: <BookOpen className="w-4 h-4" />, dataType: 'assignments' },
   { id: 'attendance', label: '출결', icon: <CalendarDays className="w-4 h-4" />, dataType: 'attendance' },
   { id: 'consultations', label: '상담', icon: <MessageSquare className="w-4 h-4" />, dataType: 'consultations' },
+  { id: 'weakness', label: '취약점 분석', icon: <AlertTriangle className="w-4 h-4" />, dataType: 'weakness' },
 ];
 
 // ============================================
@@ -82,6 +81,11 @@ const ConsultationsTab = dynamic(() => import('./tabs/ConsultationsTab').then(m 
   ssr: false,
 });
 
+const WeaknessTab = dynamic(() => import('./tabs/WeaknessTab').then(m => m.WeaknessTab), {
+  loading: () => <TabLoadingSkeleton />,
+  ssr: false,
+});
+
 // 탭 로딩 스켈레톤
 function TabLoadingSkeleton() {
   return (
@@ -92,62 +96,6 @@ function TabLoadingSkeleton() {
     </div>
   );
 }
-
-// ============================================
-// Vercel Best Practice: rerender-memo
-// 성적 추이 아이콘 컴포넌트 메모이제이션
-// ============================================
-
-interface TrendIconProps {
-  trend: 'up' | 'down' | 'stable';
-}
-
-export const TrendIcon = memo(function TrendIcon({ trend }: TrendIconProps) {
-  switch (trend) {
-    case 'up':
-      return <TrendingUp className="w-4 h-4 text-green-500" />;
-    case 'down':
-      return <TrendingDown className="w-4 h-4 text-red-500" />;
-    default:
-      return <Minus className="w-4 h-4 text-gray-400" />;
-  }
-});
-
-// ============================================
-// Vercel Best Practice: rerender-memo
-// 통계 카드 컴포넌트 메모이제이션
-// ============================================
-
-interface StatCardProps {
-  title: string;
-  value: string | number;
-  subtitle?: string;
-  icon: React.ReactNode;
-  color: 'blue' | 'green' | 'orange' | 'red' | 'purple';
-}
-
-export const StatCard = memo(function StatCard({ title, value, subtitle, icon, color }: StatCardProps) {
-  const colorClasses = {
-    blue: 'bg-blue-50 text-blue-600',
-    green: 'bg-green-50 text-green-600',
-    orange: 'bg-orange-50 text-orange-600',
-    red: 'bg-red-50 text-red-600',
-    purple: 'bg-purple-50 text-purple-600',
-  };
-
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-medium text-gray-500">{title}</span>
-        <div className={`p-2 rounded-lg ${colorClasses[color]}`}>
-          {icon}
-        </div>
-      </div>
-      <div className="text-2xl font-bold text-gray-900">{value}</div>
-      {subtitle && <div className="text-sm text-gray-500 mt-1">{subtitle}</div>}
-    </div>
-  );
-});
 
 // ============================================
 // Vercel Best Practice: rerender-memo
@@ -269,6 +217,9 @@ const TabButton = memo(function TabButton({ tab, isActive, onClick, studentId }:
       case 'consultations':
         void import('./tabs/ConsultationsTab');
         break;
+      case 'weakness':
+        void import('./tabs/WeaknessTab');
+        break;
     }
 
     // 2. 데이터도 함께 preload (SWR)
@@ -345,6 +296,8 @@ const TabContent = memo(function TabContent({ activeTab, student }: TabContentPr
       return <AttendanceTab student={student} />;
     case 'consultations':
       return <ConsultationsTab student={student} />;
+    case 'weakness':
+      return <WeaknessTab student={student} />;
     default:
       return null;
   }

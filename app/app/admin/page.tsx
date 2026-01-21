@@ -110,6 +110,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchStats()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [period])
 
   // 로딩 상태
