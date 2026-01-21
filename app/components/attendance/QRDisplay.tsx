@@ -257,6 +257,7 @@ export default function QRDisplay({
 
         {qrData?.dataUrl && (
           <div className="relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={qrData.dataUrl}
               alt="출석 QR 코드"
@@ -338,6 +339,7 @@ export default function QRDisplay({
                 </button>
               </div>
             ) : qrData?.dataUrl ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={qrData.dataUrl}
                 alt="출석 QR 코드"

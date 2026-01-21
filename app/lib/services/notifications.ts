@@ -284,7 +284,6 @@ async function getUserNotificationSettings(userId: string): Promise<UserNotifica
     const supabase = createServerSupabaseClient()
 
     // 사용자 알림 설정 조회
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: settings, error: settingsError } = await (supabase as any)
       .from('parent_notification_settings')
       .select('channels, types, quiet_hours')
@@ -297,7 +296,6 @@ async function getUserNotificationSettings(userId: string): Promise<UserNotifica
     }
 
     // 사용자 프로필 조회 (연락처)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: profile } = await (supabase as any)
       .from('profiles')
       .select('phone, email')
@@ -357,7 +355,6 @@ async function saveInAppNotification(
   try {
     const supabase = createServerSupabaseClient()
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: notification, error } = await (supabase as any)
       .from('notifications')
       .insert({
@@ -704,7 +701,6 @@ export async function getNotifications(
 
   try {
     const supabase = createServerSupabaseClient()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let query = (supabase as any)
       .from('notifications')
       .select('*', { count: 'exact' })
@@ -762,7 +758,6 @@ export async function markNotificationAsRead(
 
   try {
     const supabase = createServerSupabaseClient()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (supabase as any)
       .from('notifications')
       .update({ read: true, read_at: new Date().toISOString() })
@@ -789,7 +784,6 @@ export async function markAllNotificationsAsRead(
 
   try {
     const supabase = createServerSupabaseClient()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase as any)
       .from('notifications')
       .update({ read: true, read_at: new Date().toISOString() })
@@ -815,7 +809,6 @@ export async function getUnreadNotificationCount(userId: string): Promise<number
 
   try {
     const supabase = createServerSupabaseClient()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { count, error } = await (supabase as any)
       .from('notifications')
       .select('*', { count: 'exact', head: true })

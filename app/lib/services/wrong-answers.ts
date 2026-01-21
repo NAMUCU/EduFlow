@@ -354,7 +354,7 @@ export async function markAsReviewed(wrongAnswerId: string): Promise<ResolveResu
   }
 
   const supabase = createServerSupabaseClient()
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from('wrong_answers')
     .update({
       reviewed: true,
@@ -387,12 +387,20 @@ export async function markAsResolved(wrongAnswerId: string): Promise<ResolveResu
   }
 
   const supabase = createServerSupabaseClient()
-  const { error } = await supabase
+
+  // 먼저 현재 retry_count 조회
+  const { data: current } = await (supabase as any)
+    .from('wrong_answers')
+    .select('retry_count')
+    .eq('id', wrongAnswerId)
+    .single()
+
+  const { error } = await (supabase as any)
     .from('wrong_answers')
     .update({
       resolved: true,
       reviewed: true,
-      retry_count: supabase.rpc('increment_retry_count'),
+      retry_count: (current?.retry_count || 0) + 1,
       last_retry_date: new Date().toISOString().split('T')[0],
       updated_at: new Date().toISOString(),
     })
@@ -423,17 +431,17 @@ export async function incrementRetryCount(wrongAnswerId: string): Promise<Resolv
   const supabase = createServerSupabaseClient()
 
   // 먼저 현재 값을 가져온 후 증가
-  const { data: current, error: fetchError } = await supabase
+  const { data: current, error: fetchError } = await (supabase as any)
     .from('wrong_answers')
     .select('retry_count')
     .eq('id', wrongAnswerId)
-    .single()
+    .single() as { data: { retry_count: number } | null, error: any }
 
   if (fetchError) {
     return { success: false, error: fetchError.message }
   }
 
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from('wrong_answers')
     .update({
       retry_count: (current?.retry_count || 0) + 1,
@@ -564,7 +572,7 @@ export async function generateSimilarProblem(problemId: string): Promise<{
         solution: wrongAnswer.explanation || '풀이를 참고하세요.',
         difficulty: wrongAnswer.difficulty,
         type: wrongAnswer.type,
-        options: wrongAnswer.options,
+        options: wrongAnswer.options || null,
         image_url: null,
         tags: [wrongAnswer.chapter],
         ai_generated: true,
@@ -627,7 +635,7 @@ JSON 형식으로 응답해주세요:
           solution: parsed.solution,
           difficulty: wrongAnswer.difficulty,
           type: wrongAnswer.type,
-          options: wrongAnswer.type === 'multiple_choice' ? wrongAnswer.options : null,
+          options: wrongAnswer.type === 'multiple_choice' ? (wrongAnswer.options || null) : null,
           image_url: null,
           tags: [wrongAnswer.chapter],
           ai_generated: true,
@@ -676,7 +684,7 @@ export async function getWrongAnswerStats(studentId: string): Promise<{
   }
 
   const supabase = createServerSupabaseClient()
-  const { data, error } = await supabase
+  const { data: rawData, error } = await (supabase as any)
     .from('wrong_answers')
     .select('subject, difficulty, reviewed, resolved')
     .eq('student_id', studentId)
@@ -688,10 +696,13 @@ export async function getWrongAnswerStats(studentId: string): Promise<{
     }
   }
 
+  type WrongAnswerStat = { subject: string; difficulty: ProblemDifficulty; reviewed: boolean; resolved: boolean }
+  const data = rawData as WrongAnswerStat[] | null
+
   const bySubject: Record<string, number> = {}
   const byDifficulty: Record<ProblemDifficulty, number> = { easy: 0, medium: 0, hard: 0 }
 
-  (data || []).forEach((w: { subject: string; difficulty: ProblemDifficulty; reviewed: boolean; resolved: boolean }) => {
+  ;(data || []).forEach((w) => {
     bySubject[w.subject] = (bySubject[w.subject] || 0) + 1
     byDifficulty[w.difficulty] += 1
   })
@@ -701,9 +712,9 @@ export async function getWrongAnswerStats(studentId: string): Promise<{
       total: (data || []).length,
       bySubject,
       byDifficulty,
-      reviewed: (data || []).filter((w: { reviewed: boolean }) => w.reviewed).length,
-      notReviewed: (data || []).filter((w: { reviewed: boolean }) => !w.reviewed).length,
-      resolved: (data || []).filter((w: { resolved: boolean }) => w.resolved).length,
+      reviewed: (data || []).filter((w) => w.reviewed).length,
+      notReviewed: (data || []).filter((w) => !w.reviewed).length,
+      resolved: (data || []).filter((w) => w.resolved).length,
     },
   }
 }

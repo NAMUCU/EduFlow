@@ -402,7 +402,8 @@ export async function incrementUsageCount(id: string) {
   }
 
   const supabase = createServerSupabaseClient()
-  const { error } = await supabase.rpc('increment_fewshot_usage', { example_id: id })
+  // RPC 함수 호출 - 타입은 실제 Supabase 스키마에서 생성
+  const { error } = await (supabase as any).rpc('increment_fewshot_usage', { example_id: id })
 
   return { success: !error, error: error?.message || null }
 }
@@ -445,7 +446,7 @@ export async function getUnitList(subject?: string, grade?: string) {
   }
 
   const supabase = createServerSupabaseClient()
-  let query = supabase
+  let query = (supabase as any)
     .from('fewshot_examples')
     .select('unit')
 
@@ -456,7 +457,7 @@ export async function getUnitList(subject?: string, grade?: string) {
     query = query.eq('grade', grade)
   }
 
-  const { data, error } = await query
+  const { data, error } = await query as { data: { unit: string }[] | null, error: any }
 
   if (error) {
     return { data: [], error: error.message }
@@ -495,13 +496,15 @@ export async function getFewshotStats(academyId?: string) {
 
   // Supabase 모드에서는 집계 쿼리 사용
   const supabase = createServerSupabaseClient()
-  const { data, error } = await supabase
+  const { data: rawData, error } = await (supabase as any)
     .from('fewshot_examples')
     .select('difficulty, subject, usage_count')
 
   if (error) {
     return { data: null, error: error.message }
   }
+
+  const data = rawData as { difficulty: string, subject: string, usage_count: number }[] | null
 
   const stats = {
     total: data?.length || 0,

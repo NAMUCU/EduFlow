@@ -286,7 +286,7 @@ export async function verifyCheckIn(
       const supabase = createServerSupabaseClient()
 
       // 학생 정보 조회
-      const { data: studentData } = await supabase
+      const { data: studentData } = await (supabase as any)
         .from('students')
         .select('id, user:profiles(name)')
         .eq('id', studentId)
@@ -297,7 +297,7 @@ export async function verifyCheckIn(
       }
 
       // 수업 정보 조회
-      const { data: classData } = await supabase
+      const { data: classData } = await (supabase as any)
         .from('classes')
         .select('name')
         .eq('id', qrData.classId)
@@ -308,12 +308,12 @@ export async function verifyCheckIn(
       }
 
       // 중복 체크인 확인
-      const { data: existingAttendance } = await supabase
+      const { data: existingAttendance } = await (supabase as any)
         .from('attendance')
         .select('id, status')
         .eq('student_id', studentId)
         .eq('date', qrData.date)
-        .single()
+        .single() as { data: { id: string, status: string } | null }
 
       if (existingAttendance) {
         return {
@@ -327,7 +327,7 @@ export async function verifyCheckIn(
       }
 
       // 출석 기록 생성
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('attendance')
         .insert({
           student_id: studentId,
