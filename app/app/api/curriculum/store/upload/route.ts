@@ -1,17 +1,17 @@
 /**
  * 커리큘럼 문서 업로드 API
- * Claude Vision으로 전처리 후 File Search Store에 업로드
+ * PDF.co + Claude Vision으로 전처리 후 File Search Store에 업로드
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenAI } from '@google/genai'
 import Anthropic from '@anthropic-ai/sdk'
-import { writeFileSync, unlinkSync, readFileSync } from 'fs'
+import { writeFileSync, unlinkSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { execSync } from 'child_process'
 
 const CURRICULUM_STORE_NAME = 'EduFlow_Curriculum_Store'
+const PDFCO_API_BASE = 'https://api.pdf.co/v1'
 
 function getGenAIClient() {
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY
@@ -29,40 +29,78 @@ function getClaudeClient() {
   return new Anthropic({ apiKey })
 }
 
-// PDF를 이미지로 변환 (pdf-poppler 또는 pdftoppm 사용)
-async function pdfToImages(pdfPath: string): Promise<string[]> {
-  const outputDir = join(tmpdir(), `pdf-images-${Date.now()}`)
-  execSync(`mkdir -p "${outputDir}"`)
+// PDF.co에 파일 업로드
+async function uploadToPdfCo(buffer: Buffer, fileName: string): Promise<string> {
+  const apiKey = process.env.PDFCO_API_KEY
+  if (!apiKey) {
+    throw new Error('PDFCO_API_KEY 환경변수가 설정되지 않았습니다.')
+  }
+
+  // Presigned URL 가져오기
+  const presignRes = await fetch(
+    `${PDFCO_API_BASE}/file/upload/get-presigned-url?name=${encodeURIComponent(fileName)}&contenttype=application/pdf`,
+    { headers: { 'x-api-key': apiKey } }
+  )
+  const { presignedUrl, url } = await presignRes.json()
+
+  // 파일 업로드
+  await fetch(presignedUrl, {
+    method: 'PUT',
+    body: new Uint8Array(buffer),
+    headers: { 'Content-Type': 'application/pdf' },
+  })
+
+  return url
+}
+
+// PDF.co로 PDF → 이미지 변환
+async function pdfToImages(pdfBuffer: Buffer, fileName: string): Promise<string[]> {
+  const apiKey = process.env.PDFCO_API_KEY
+  if (!apiKey) {
+    console.log('[Mock] PDF.co API 키 없음, 빈 배열 반환')
+    return []
+  }
 
   try {
-    // pdftoppm 사용 (poppler-utils 필요)
-    execSync(`pdftoppm -png -r 150 "${pdfPath}" "${outputDir}/page"`)
+    // PDF 업로드
+    const pdfUrl = await uploadToPdfCo(pdfBuffer, fileName)
 
-    // 생성된 이미지 파일 목록
-    const files = execSync(`ls "${outputDir}"/*.png 2>/dev/null || true`)
-      .toString()
-      .trim()
-      .split('\n')
-      .filter(f => f)
+    // PDF → PNG 변환
+    const response = await fetch(`${PDFCO_API_BASE}/pdf/convert/to/png`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+      },
+      body: JSON.stringify({
+        url: pdfUrl,
+        pages: '0-',  // 모든 페이지
+      }),
+    })
 
-    return files
+    const result = await response.json()
+
+    if (result.error) {
+      console.error('PDF.co 변환 오류:', result.message)
+      return []
+    }
+
+    // urls 배열 반환 (각 페이지별 이미지 URL)
+    return result.urls || (result.url ? [result.url] : [])
   } catch (error) {
     console.error('PDF → 이미지 변환 실패:', error)
     return []
   }
 }
 
-// Claude Vision으로 이미지를 마크다운으로 변환 (병렬 처리 - async-parallel)
+// Claude Vision으로 이미지 URL을 마크다운으로 변환 (병렬 처리)
 async function convertWithClaudeVision(
   claude: Anthropic,
-  imagePaths: string[]
+  imageUrls: string[]
 ): Promise<string> {
   // 병렬로 모든 페이지 처리
   const results = await Promise.all(
-    imagePaths.map(async (imagePath, i) => {
-      const imageData = readFileSync(imagePath)
-      const base64 = imageData.toString('base64')
-
+    imageUrls.map(async (imageUrl, i) => {
       try {
         const response = await claude.messages.create({
           model: 'claude-sonnet-4-20250514',
@@ -74,9 +112,8 @@ async function convertWithClaudeVision(
                 {
                   type: 'image',
                   source: {
-                    type: 'base64',
-                    media_type: 'image/png',
-                    data: base64,
+                    type: 'url',
+                    url: imageUrl,
                   },
                 },
                 {
@@ -139,9 +176,7 @@ async function getOrCreateStore(client: GoogleGenAI) {
 
 // 파일 업로드 처리
 export async function POST(request: NextRequest) {
-  let tempFilePath: string | null = null
   let mdFilePath: string | null = null
-  const imagePaths: string[] = []
 
   try {
     const formData = await request.formData()
@@ -166,41 +201,52 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 파일을 임시 경로에 저장
     const buffer = Buffer.from(await file.arrayBuffer())
     const ext = file.name.split('.').pop()?.toLowerCase() || 'bin'
-    tempFilePath = join(tmpdir(), `curriculum-upload-${Date.now()}.${ext}`)
-    writeFileSync(tempFilePath, buffer)
 
-    let uploadPath = tempFilePath
-    let mimeType = 'application/octet-stream'
+    let markdownContent: string | null = null
     let displayName = file.name
 
-    // PDF 파일인 경우 Claude Vision으로 전처리
+    // PDF 파일인 경우 PDF.co + Claude Vision으로 전처리
     if (ext === 'pdf') {
-      console.log('[커리큘럼 업로드] PDF 감지, Claude Vision으로 전처리 시작')
+      console.log('[커리큘럼 업로드] PDF 감지, PDF.co + Claude Vision으로 전처리 시작')
 
-      // PDF → 이미지 변환
-      const images = await pdfToImages(tempFilePath)
-      imagePaths.push(...images)
+      // PDF.co로 이미지 변환
+      const imageUrls = await pdfToImages(buffer, file.name)
 
-      if (images.length > 0) {
+      if (imageUrls.length > 0) {
         // Claude Vision으로 마크다운 변환
-        const markdown = await convertWithClaudeVision(claude, images)
-
-        // 마크다운 파일로 저장
-        mdFilePath = tempFilePath.replace('.pdf', '.md')
-        writeFileSync(mdFilePath, markdown, 'utf-8')
-
-        uploadPath = mdFilePath
-        mimeType = 'text/markdown'
+        markdownContent = await convertWithClaudeVision(claude, imageUrls)
         displayName = `${file.name} (Claude Vision 전처리)`
-
-        console.log(`[커리큘럼 업로드] 전처리 완료: ${images.length}페이지 → 마크다운`)
+        console.log(`[커리큘럼 업로드] 전처리 완료: ${imageUrls.length}페이지 → 마크다운`)
+      } else {
+        console.log('[커리큘럼 업로드] PDF.co 변환 실패, 원본 PDF 업로드')
       }
+    }
+
+    // Gemini에 파일 업로드
+    const g = gemini as any
+    let uploadedFile
+
+    if (markdownContent) {
+      // 전처리된 마크다운 업로드
+      mdFilePath = join(tmpdir(), `curriculum-${Date.now()}.md`)
+      writeFileSync(mdFilePath, markdownContent, 'utf-8')
+
+      uploadedFile = await g.files?.upload?.({
+        file: mdFilePath,
+        config: {
+          mimeType: 'text/markdown',
+          displayName,
+        },
+      })
     } else {
-      // 다른 파일은 그대로 업로드
+      // 원본 파일 업로드 (PDF 변환 실패 또는 다른 형식)
+      const tempPath = join(tmpdir(), `curriculum-${Date.now()}.${ext}`)
+      writeFileSync(tempPath, buffer)
+
       const mimeTypes: Record<string, string> = {
+        pdf: 'application/pdf',
         xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         xls: 'application/vnd.ms-excel',
         txt: 'text/plain',
@@ -208,18 +254,17 @@ export async function POST(request: NextRequest) {
         csv: 'text/csv',
         docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       }
-      mimeType = mimeTypes[ext] || 'application/octet-stream'
-    }
 
-    // Gemini에 파일 업로드
-    const g = gemini as any
-    const uploadedFile = await g.files?.upload?.({
-      file: uploadPath,
-      config: {
-        mimeType,
-        displayName,
-      },
-    })
+      uploadedFile = await g.files?.upload?.({
+        file: tempPath,
+        config: {
+          mimeType: mimeTypes[ext] || 'application/octet-stream',
+          displayName: file.name,
+        },
+      })
+
+      try { unlinkSync(tempPath) } catch { /* 무시 */ }
+    }
 
     if (!uploadedFile?.name) {
       return NextResponse.json(
@@ -264,7 +309,7 @@ export async function POST(request: NextRequest) {
       file: {
         name: file.name,
         geminiFileId: uploadedFile.name,
-        preprocessed: ext === 'pdf',
+        preprocessed: ext === 'pdf' && !!markdownContent,
       },
     })
   } catch (error) {
@@ -277,15 +322,8 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   } finally {
-    // 임시 파일들 삭제
-    if (tempFilePath) {
-      try { unlinkSync(tempFilePath) } catch { /* 무시 */ }
-    }
     if (mdFilePath) {
       try { unlinkSync(mdFilePath) } catch { /* 무시 */ }
-    }
-    for (const imgPath of imagePaths) {
-      try { unlinkSync(imgPath) } catch { /* 무시 */ }
     }
   }
 }
