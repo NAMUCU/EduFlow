@@ -6,7 +6,7 @@
  * - 저장된 문제에서 선택
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 
 interface Problem {
   id: string
@@ -54,50 +54,59 @@ export function ProblemSearch({
 }: ProblemSearchProps) {
   const [problems] = useState<Problem[]>(mockProblems)
   const [searchQuery, setSearchQuery] = useState('')
-  const [localSelectedIds, setLocalSelectedIds] = useState<string[]>(selectedIds)
+  const [localSelectedIds, setLocalSelectedIds] = useState<Set<string>>(() => new Set(selectedIds))
   const [gradeFilter, setGradeFilter] = useState(filterGrade || 'all')
   const [unitFilter, setUnitFilter] = useState(filterUnit || 'all')
   const [difficultyFilter, setDifficultyFilter] = useState('all')
 
   useEffect(() => {
-    setLocalSelectedIds(selectedIds)
+    setLocalSelectedIds(new Set(selectedIds))
   }, [selectedIds])
 
-  // 필터링
-  const filteredProblems = problems.filter(p => {
-    if (gradeFilter !== 'all' && p.grade !== gradeFilter) return false
-    if (unitFilter !== 'all' && p.unit !== unitFilter) return false
-    if (difficultyFilter !== 'all' && p.difficulty !== difficultyFilter) return false
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      return p.question.toLowerCase().includes(query) ||
-             p.unit.toLowerCase().includes(query) ||
-             p.id.toLowerCase().includes(query)
-    }
-    return true
-  })
+  // 필터링 (useMemo로 최적화)
+  const filteredProblems = useMemo(() => {
+    return problems.filter(p => {
+      if (gradeFilter !== 'all' && p.grade !== gradeFilter) return false
+      if (unitFilter !== 'all' && p.unit !== unitFilter) return false
+      if (difficultyFilter !== 'all' && p.difficulty !== difficultyFilter) return false
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase()
+        return p.question.toLowerCase().includes(query) ||
+               p.unit.toLowerCase().includes(query) ||
+               p.id.toLowerCase().includes(query)
+      }
+      return true
+    })
+  }, [problems, gradeFilter, unitFilter, difficultyFilter, searchQuery])
 
   const units = [...new Set(problems.map(p => p.unit))]
 
   const toggleSelect = (id: string) => {
-    let newSelected: string[]
+    const newSelected = new Set(localSelectedIds)
     if (multiSelect) {
-      newSelected = localSelectedIds.includes(id)
-        ? localSelectedIds.filter(i => i !== id)
-        : [...localSelectedIds, id]
+      if (newSelected.has(id)) {
+        newSelected.delete(id)
+      } else {
+        newSelected.add(id)
+      }
     } else {
-      newSelected = localSelectedIds.includes(id) ? [] : [id]
+      if (newSelected.has(id)) {
+        newSelected.clear()
+      } else {
+        newSelected.clear()
+        newSelected.add(id)
+      }
     }
     setLocalSelectedIds(newSelected)
 
     if (onSelect) {
-      const selectedProblems = problems.filter(p => newSelected.includes(p.id))
+      const selectedProblems = problems.filter(p => newSelected.has(p.id))
       onSelect(selectedProblems)
     }
   }
 
   const selectAll = () => {
-    const allIds = filteredProblems.map(p => p.id)
+    const allIds = new Set(filteredProblems.map(p => p.id))
     setLocalSelectedIds(allIds)
     if (onSelect) {
       onSelect(filteredProblems)
@@ -105,7 +114,7 @@ export function ProblemSearch({
   }
 
   const clearSelection = () => {
-    setLocalSelectedIds([])
+    setLocalSelectedIds(new Set())
     if (onSelect) {
       onSelect([])
     }
@@ -178,9 +187,9 @@ export function ProblemSearch({
       </div>
 
       {/* 선택 상태 */}
-      {localSelectedIds.length > 0 && (
+      {localSelectedIds.size > 0 && (
         <div className="px-4 py-2 bg-blue-50 border-b text-sm text-blue-800">
-          {localSelectedIds.length}개 문제 선택됨
+          {localSelectedIds.size}개 문제 선택됨
         </div>
       )}
 
@@ -191,13 +200,13 @@ export function ProblemSearch({
             key={problem.id}
             onClick={() => toggleSelect(problem.id)}
             className={`p-4 border-b cursor-pointer hover:bg-gray-50 ${
-              localSelectedIds.includes(problem.id) ? 'bg-blue-50' : ''
+              localSelectedIds.has(problem.id) ? 'bg-blue-50' : ''
             }`}
           >
             <div className="flex items-start gap-3">
               <input
                 type="checkbox"
-                checked={localSelectedIds.includes(problem.id)}
+                checked={localSelectedIds.has(problem.id)}
                 onChange={() => {}}
                 className="mt-1 h-4 w-4 text-blue-600 rounded"
               />

@@ -226,7 +226,7 @@ const StatsCard = memo(function StatsCard({
           <p className="text-sm text-gray-500 mb-1 truncate">{label}</p>
           <div className="flex items-baseline gap-1">
             <p className="text-2xl font-bold text-gray-900">{value}</p>
-            {unit && <span className="text-sm text-gray-500">{unit}</span>}
+            {unit ? <span className="text-sm text-gray-500">{unit}</span> : null}
           </div>
 
           {/* 변화량 표시 */}
@@ -359,7 +359,7 @@ export const LargeStatsCard = memo(function LargeStatsCard({
       <p className="text-sm text-gray-500 mb-1">{label}</p>
       <div className="flex items-baseline gap-1 mb-2">
         <p className="text-3xl font-bold text-gray-900">{value}</p>
-        {unit && <span className="text-lg text-gray-500">{unit}</span>}
+        {unit ? <span className="text-lg text-gray-500">{unit}</span> : null}
       </div>
 
       {/* 부가 설명 */}
@@ -421,7 +421,7 @@ export const ColorfulStatsCard = memo(function ColorfulStatsCard({
       <p className="text-sm text-white/80 mb-1">{label}</p>
       <div className="flex items-baseline gap-1">
         <p className="text-3xl font-bold">{value}</p>
-        {unit && <span className="text-lg text-white/70">{unit}</span>}
+        {unit ? <span className="text-lg text-white/70">{unit}</span> : null}
       </div>
 
       {/* 스파크라인 (흰색) */}

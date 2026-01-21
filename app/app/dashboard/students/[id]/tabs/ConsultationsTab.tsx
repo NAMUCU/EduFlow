@@ -1,21 +1,23 @@
 'use client';
 
 import { memo } from 'react';
-import { StudentDetail } from '@/types/student';
+import { Consultation } from '@/types/database';
 import { MessageSquare, Calendar, User, Clock } from 'lucide-react';
 
 interface ConsultationsTabProps {
-  student: StudentDetail;
+  consultations: Consultation[];
+  studentId: string;
+  studentName: string;
 }
 
-export const ConsultationsTab = memo(function ConsultationsTab({ student }: ConsultationsTabProps) {
+export const ConsultationsTab = memo(function ConsultationsTab({ consultations, studentId, studentName }: ConsultationsTabProps) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6">
       <h3 className="font-bold text-gray-900 mb-4">상담 기록</h3>
 
-      {student.consultations && student.consultations.length > 0 ? (
+      {consultations && consultations.length > 0 ? (
         <div className="space-y-4">
-          {student.consultations.map((consultation, index) => (
+          {consultations.map((consultation, index) => (
             <div key={index} className="p-4 border border-gray-200 rounded-xl">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">

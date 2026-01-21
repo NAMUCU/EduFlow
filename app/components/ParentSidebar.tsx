@@ -76,7 +76,7 @@ export default function ParentSidebar() {
                 >
                   <item.icon className="w-5 h-5" />
                   <span>{item.label}</span>
-                  {isActive && <ChevronRight className="w-4 h-4 ml-auto" />}
+                  {isActive ? <ChevronRight className="w-4 h-4 ml-auto" /> : null}
                 </Link>
               </li>
             )

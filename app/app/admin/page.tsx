@@ -4,102 +4,280 @@ import { useState, useEffect } from 'react'
 import {
   Building2,
   Users,
-  FileQuestion,
+  GraduationCap,
   CreditCard,
+  CheckCircle,
+  MessageSquare,
   ArrowUpRight,
   ArrowDownRight,
-  BarChart3,
   Activity,
   Calendar,
   Loader2,
+  Clock,
+  ExternalLink,
 } from 'lucide-react'
 import Link from 'next/link'
-import { StatCard, LineChart, PieChart, BarChart } from '@/components/charts'
-import type { AdminStats, AdminStatsResponse, PeriodType } from '@/types/stats'
+import { StatCard, BarChart } from '@/components/charts'
 
+// ============================================
 // UI 텍스트 상수
+// ============================================
 const UI_TEXT = {
-  pageTitle: '대시보드',
-  pageSubtitle: 'EduFlow 서비스 현황을 한눈에 확인하세요',
+  pageTitle: '슈퍼 어드민 대시보드',
+  pageSubtitle: 'EduFlow 전체 서비스 현황을 한눈에 확인하세요',
   totalAcademies: '총 학원 수',
-  totalUsers: '총 사용자 수',
-  monthlyProblems: '이번 달 문제 생성',
+  totalStudents: '총 학생 수',
+  totalTeachers: '총 강사 수',
   monthlyRevenue: '이번 달 매출',
-  problemTrend: '문제 생성 추이',
-  subjectDistribution: '과목별 문제 생성',
+  activeSubscriptions: '활성 구독 수',
+  todayInquiries: '오늘 문의 건수',
   recentAcademies: '최근 가입 학원',
-  topAcademies: '이번 달 TOP 학원',
+  recentInquiries: '최근 고객 문의',
+  academyActivity: '학원별 활동 현황',
   viewAll: '전체 보기',
-  downloadReport: '리포트 다운로드',
   loading: '데이터를 불러오는 중...',
   error: '데이터를 불러오는 중 오류가 발생했습니다.',
   retry: '다시 시도',
-  periodWeek: '이번 주',
-  periodMonth: '이번 달',
-  periodQuarter: '이번 분기',
-  periodYear: '올해',
-  daily: '일별',
-  weekly: '주별',
   academyName: '학원명',
   owner: '원장',
   plan: '요금제',
   studentCount: '학생 수',
-  status: '상태',
   joinDate: '가입일',
+  status: '상태',
   active: '활성',
-  pending: '대기',
-  problems: '문제',
-  totalProblems: '총 문제 생성 수',
+  pending: '대기중',
+  inquiry: '문의',
+  customer: '고객',
+  date: '날짜',
+  type: '유형',
+  new: '신규',
+  inProgress: '처리중',
+  resolved: '완료',
+  problemsGenerated: '문제 생성 수',
 }
 
-// 요금제 스타일
-const planStyles = {
+// ============================================
+// Mock 데이터
+// ============================================
+interface AdminDashboardStats {
+  totalAcademies: number
+  totalAcademiesChange: number
+  totalStudents: number
+  totalStudentsChange: number
+  totalTeachers: number
+  totalTeachersChange: number
+  monthlyRevenue: number
+  monthlyRevenueChange: number
+  activeSubscriptions: number
+  activeSubscriptionsChange: number
+  todayInquiries: number
+  todayInquiriesChange: number
+  recentAcademies: {
+    id: string
+    name: string
+    owner: string
+    plan: 'enterprise' | 'pro' | 'basic' | 'free'
+    studentCount: number
+    status: 'active' | 'pending'
+    joinDate: string
+  }[]
+  recentInquiries: {
+    id: string
+    customer: string
+    academy: string
+    type: string
+    status: 'new' | 'in_progress' | 'resolved'
+    date: string
+    summary: string
+  }[]
+  academyActivityData: {
+    label: string
+    value: number
+  }[]
+}
+
+const MOCK_STATS: AdminDashboardStats = {
+  totalAcademies: 156,
+  totalAcademiesChange: 12,
+  totalStudents: 8432,
+  totalStudentsChange: 234,
+  totalTeachers: 423,
+  totalTeachersChange: 18,
+  monthlyRevenue: 45600000,
+  monthlyRevenueChange: 15.2,
+  activeSubscriptions: 142,
+  activeSubscriptionsChange: 8,
+  todayInquiries: 7,
+  todayInquiriesChange: -2,
+  recentAcademies: [
+    {
+      id: '1',
+      name: '수학의 정석 학원',
+      owner: '김정훈',
+      plan: 'pro',
+      studentCount: 45,
+      status: 'active',
+      joinDate: '2025-01-20',
+    },
+    {
+      id: '2',
+      name: '영어왕 어학원',
+      owner: '이수진',
+      plan: 'enterprise',
+      studentCount: 120,
+      status: 'active',
+      joinDate: '2025-01-19',
+    },
+    {
+      id: '3',
+      name: '과학탐구 학원',
+      owner: '박민수',
+      plan: 'basic',
+      studentCount: 28,
+      status: 'pending',
+      joinDate: '2025-01-18',
+    },
+    {
+      id: '4',
+      name: '국어논술 전문학원',
+      owner: '최영희',
+      plan: 'pro',
+      studentCount: 65,
+      status: 'active',
+      joinDate: '2025-01-17',
+    },
+    {
+      id: '5',
+      name: '코딩스쿨',
+      owner: '정대현',
+      plan: 'free',
+      studentCount: 15,
+      status: 'active',
+      joinDate: '2025-01-16',
+    },
+  ],
+  recentInquiries: [
+    {
+      id: '1',
+      customer: '김철수',
+      academy: '수학의 정석 학원',
+      type: '결제 문의',
+      status: 'new',
+      date: '2025-01-21 14:30',
+      summary: '구독 결제 실패 문제 문의',
+    },
+    {
+      id: '2',
+      customer: '이영희',
+      academy: '영어왕 어학원',
+      type: '기능 문의',
+      status: 'in_progress',
+      date: '2025-01-21 11:20',
+      summary: 'AI 문제 생성 기능 사용 방법 문의',
+    },
+    {
+      id: '3',
+      customer: '박지민',
+      academy: '과학탐구 학원',
+      type: '기술 지원',
+      status: 'in_progress',
+      date: '2025-01-21 09:45',
+      summary: '학생 데이터 일괄 등록 오류',
+    },
+    {
+      id: '4',
+      customer: '최동욱',
+      academy: '국어논술 전문학원',
+      type: '환불 요청',
+      status: 'resolved',
+      date: '2025-01-20 16:00',
+      summary: '요금제 다운그레이드 관련 환불 요청',
+    },
+    {
+      id: '5',
+      customer: '정서연',
+      academy: '코딩스쿨',
+      type: '기능 제안',
+      status: 'new',
+      date: '2025-01-20 10:15',
+      summary: '코딩 문제 유형 추가 제안',
+    },
+  ],
+  academyActivityData: [
+    { label: '수학의 정석', value: 450 },
+    { label: '영어왕', value: 380 },
+    { label: '과학탐구', value: 320 },
+    { label: '국어논술', value: 290 },
+    { label: '코딩스쿨', value: 210 },
+    { label: '물리마스터', value: 180 },
+    { label: '화학천재', value: 150 },
+  ],
+}
+
+// ============================================
+// 스타일 상수
+// ============================================
+const planStyles: Record<string, string> = {
   enterprise: 'bg-purple-100 text-purple-700',
   pro: 'bg-blue-100 text-blue-700',
   basic: 'bg-gray-100 text-gray-600',
   free: 'bg-green-100 text-green-600',
 }
 
-// 요금제 라벨
-const planLabels = {
+const planLabels: Record<string, string> = {
   enterprise: 'Enterprise',
   pro: 'Pro',
   basic: 'Basic',
   free: 'Free',
 }
 
-// 순위 스타일
-const rankStyles = [
-  'bg-yellow-100 text-yellow-700',
-  'bg-gray-200 text-gray-600',
-  'bg-orange-100 text-orange-700',
-  'bg-gray-100 text-gray-500',
-  'bg-gray-100 text-gray-500',
-]
+const statusStyles: Record<string, string> = {
+  active: 'bg-green-100 text-green-700',
+  pending: 'bg-yellow-100 text-yellow-700',
+}
 
-// 색상 팔레트
-const CHART_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+const inquiryStatusStyles: Record<string, string> = {
+  new: 'bg-red-100 text-red-700',
+  in_progress: 'bg-yellow-100 text-yellow-700',
+  resolved: 'bg-green-100 text-green-700',
+}
 
-export default function AdminDashboard() {
-  const [stats, setStats] = useState<AdminStats | null>(null)
+const inquiryStatusLabels: Record<string, string> = {
+  new: '신규',
+  in_progress: '처리중',
+  resolved: '완료',
+}
+
+// ============================================
+// 매출 포맷 함수
+// ============================================
+const formatRevenue = (value: number) => {
+  if (value >= 100000000) {
+    return `${(value / 100000000).toFixed(1)}억원`
+  }
+  if (value >= 10000) {
+    return `${Math.floor(value / 10000).toLocaleString()}만원`
+  }
+  return `${value.toLocaleString()}원`
+}
+
+// ============================================
+// 메인 컴포넌트
+// ============================================
+export default function AdminDashboardPage() {
+  const [stats, setStats] = useState<AdminDashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [period, setPeriod] = useState<PeriodType>('month')
 
-  // 통계 데이터 로드
+  // Mock 데이터 로드 (실제로는 API 호출)
   const fetchStats = async () => {
     try {
       setLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/stats/admin?period=${period}`)
-      const data: AdminStatsResponse = await response.json()
-
-      if (data.success && data.data) {
-        setStats(data.data)
-      } else {
-        setError(data.error || UI_TEXT.error)
-      }
+      // Mock: 실제로는 API 호출
+      await new Promise(resolve => setTimeout(resolve, 500))
+      setStats(MOCK_STATS)
     } catch (err) {
       console.error('통계 로드 오류:', err)
       setError(UI_TEXT.error)
@@ -110,18 +288,15 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchStats()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [period])
+  }, [])
 
   // 로딩 상태
   if (loading) {
     return (
       <div className="p-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{UI_TEXT.pageTitle}</h1>
-            <p className="text-gray-500">{UI_TEXT.pageSubtitle}</p>
-          </div>
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">{UI_TEXT.pageTitle}</h1>
+          <p className="text-gray-500">{UI_TEXT.pageSubtitle}</p>
         </div>
         <div className="flex items-center justify-center h-[60vh]">
           <div className="flex flex-col items-center gap-4">
@@ -137,11 +312,9 @@ export default function AdminDashboard() {
   if (error || !stats) {
     return (
       <div className="p-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{UI_TEXT.pageTitle}</h1>
-            <p className="text-gray-500">{UI_TEXT.pageSubtitle}</p>
-          </div>
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">{UI_TEXT.pageTitle}</h1>
+          <p className="text-gray-500">{UI_TEXT.pageSubtitle}</p>
         </div>
         <div className="flex items-center justify-center h-[60vh]">
           <div className="flex flex-col items-center gap-4">
@@ -155,81 +328,40 @@ export default function AdminDashboard() {
     )
   }
 
-  // 차트 데이터 변환
-  const problemsTrendData = stats.dailyProblemsTrend.map(item => ({
-    label: item.label,
-    value: item.value,
-  }))
-
-  const subjectPieData = stats.problemsBySubject.map((item, index) => ({
-    name: item.subject,
-    value: item.count,
-    color: CHART_COLORS[index % CHART_COLORS.length],
-  }))
-
-  // 매출 포맷터
-  const formatRevenue = (value: number) => {
-    if (value >= 100000000) {
-      return `${(value / 100000000).toFixed(1)}억원`
-    }
-    if (value >= 10000) {
-      return `${(value / 10000).toFixed(0)}만원`
-    }
-    return `${value.toLocaleString()}원`
-  }
-
   return (
     <div className="p-8">
       {/* 헤더 */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">{UI_TEXT.pageTitle}</h1>
-          <p className="text-gray-500">{UI_TEXT.pageSubtitle}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <select
-            className="input w-auto"
-            value={period}
-            onChange={(e) => setPeriod(e.target.value as PeriodType)}
-          >
-            <option value="week">{UI_TEXT.periodWeek}</option>
-            <option value="month">{UI_TEXT.periodMonth}</option>
-            <option value="quarter">{UI_TEXT.periodQuarter}</option>
-            <option value="year">{UI_TEXT.periodYear}</option>
-          </select>
-          <button className="btn-primary flex items-center gap-2">
-            <Calendar className="w-4 h-4" />
-            {UI_TEXT.downloadReport}
-          </button>
-        </div>
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900">{UI_TEXT.pageTitle}</h1>
+        <p className="text-gray-500">{UI_TEXT.pageSubtitle}</p>
       </div>
 
-      {/* 통계 카드 */}
-      <div className="grid grid-cols-4 gap-6 mb-8">
+      {/* 통계 카드 - 6개 */}
+      <div className="grid grid-cols-6 gap-4 mb-8">
         <StatCard
           label={UI_TEXT.totalAcademies}
           value={stats.totalAcademies.toLocaleString()}
           change={stats.totalAcademiesChange > 0 ? `+${stats.totalAcademiesChange}` : `${stats.totalAcademiesChange}`}
           changeType={stats.totalAcademiesChange >= 0 ? 'positive' : 'negative'}
-          icon={<Building2 className="w-6 h-6" />}
+          icon={<Building2 className="w-5 h-5" />}
           iconBgColor="bg-blue-100"
           iconColor="text-blue-600"
         />
         <StatCard
-          label={UI_TEXT.totalUsers}
-          value={stats.totalUsers.toLocaleString()}
-          change={stats.totalUsersChange > 0 ? `+${stats.totalUsersChange}` : `${stats.totalUsersChange}`}
-          changeType={stats.totalUsersChange >= 0 ? 'positive' : 'negative'}
-          icon={<Users className="w-6 h-6" />}
+          label={UI_TEXT.totalStudents}
+          value={stats.totalStudents.toLocaleString()}
+          change={stats.totalStudentsChange > 0 ? `+${stats.totalStudentsChange}` : `${stats.totalStudentsChange}`}
+          changeType={stats.totalStudentsChange >= 0 ? 'positive' : 'negative'}
+          icon={<Users className="w-5 h-5" />}
           iconBgColor="bg-green-100"
           iconColor="text-green-600"
         />
         <StatCard
-          label={UI_TEXT.monthlyProblems}
-          value={stats.monthlyProblems.toLocaleString()}
-          change={stats.monthlyProblemsChange > 0 ? `+${stats.monthlyProblemsChange.toLocaleString()}` : `${stats.monthlyProblemsChange.toLocaleString()}`}
-          changeType={stats.monthlyProblemsChange >= 0 ? 'positive' : 'negative'}
-          icon={<FileQuestion className="w-6 h-6" />}
+          label={UI_TEXT.totalTeachers}
+          value={stats.totalTeachers.toLocaleString()}
+          change={stats.totalTeachersChange > 0 ? `+${stats.totalTeachersChange}` : `${stats.totalTeachersChange}`}
+          changeType={stats.totalTeachersChange >= 0 ? 'positive' : 'negative'}
+          icon={<GraduationCap className="w-5 h-5" />}
           iconBgColor="bg-purple-100"
           iconColor="text-purple-600"
         />
@@ -238,153 +370,135 @@ export default function AdminDashboard() {
           value={formatRevenue(stats.monthlyRevenue)}
           change={`+${stats.monthlyRevenueChange}%`}
           changeType={stats.monthlyRevenueChange >= 0 ? 'positive' : 'negative'}
-          icon={<CreditCard className="w-6 h-6" />}
+          icon={<CreditCard className="w-5 h-5" />}
           iconBgColor="bg-orange-100"
           iconColor="text-orange-600"
         />
+        <StatCard
+          label={UI_TEXT.activeSubscriptions}
+          value={stats.activeSubscriptions.toLocaleString()}
+          change={stats.activeSubscriptionsChange > 0 ? `+${stats.activeSubscriptionsChange}` : `${stats.activeSubscriptionsChange}`}
+          changeType={stats.activeSubscriptionsChange >= 0 ? 'positive' : 'negative'}
+          icon={<CheckCircle className="w-5 h-5" />}
+          iconBgColor="bg-teal-100"
+          iconColor="text-teal-600"
+        />
+        <StatCard
+          label={UI_TEXT.todayInquiries}
+          value={stats.todayInquiries.toLocaleString()}
+          change={stats.todayInquiriesChange > 0 ? `+${stats.todayInquiriesChange}` : `${stats.todayInquiriesChange}`}
+          changeType={stats.todayInquiriesChange >= 0 ? 'positive' : 'negative'}
+          icon={<MessageSquare className="w-5 h-5" />}
+          iconBgColor="bg-pink-100"
+          iconColor="text-pink-600"
+        />
       </div>
 
-      <div className="grid grid-cols-3 gap-6 mb-8">
-        {/* 문제 생성 추이 */}
-        <div className="col-span-2 card">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="font-bold text-gray-900 flex items-center gap-2">
-              <Activity className="w-5 h-5 text-primary-500" />
-              {UI_TEXT.problemTrend}
-            </h3>
-            <div className="flex gap-2">
-              <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full">{UI_TEXT.daily}</span>
-              <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full cursor-pointer hover:bg-gray-200">{UI_TEXT.weekly}</span>
-            </div>
-          </div>
-          <LineChart
-            data={problemsTrendData}
-            height={240}
-            color="#6366f1"
-            showGrid={true}
-            showTooltip={true}
-          />
-        </div>
-
-        {/* 과목별 분포 */}
+      {/* 하단 섹션: 최근 가입 학원 + 최근 문의 */}
+      <div className="grid grid-cols-2 gap-6 mb-8">
+        {/* 최근 가입 학원 (5개) */}
         <div className="card">
-          <h3 className="font-bold text-gray-900 flex items-center gap-2 mb-6">
-            {UI_TEXT.subjectDistribution}
-          </h3>
-          <PieChart
-            data={subjectPieData}
-            height={180}
-            showLabel={true}
-            showLegend={false}
-            innerRadius={50}
-            outerRadius={80}
-          />
-          <div className="space-y-3 mt-4">
-            {stats.problemsBySubject.map((subject, index) => (
-              <div key={subject.subject}>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="font-medium text-gray-700">{subject.subject}</span>
-                  <span className="text-gray-500">{subject.percentage}%</span>
-                </div>
-                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all"
-                    style={{
-                      width: `${subject.percentage}%`,
-                      backgroundColor: CHART_COLORS[index % CHART_COLORS.length],
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="mt-6 pt-4 border-t border-gray-100">
-            <p className="text-sm text-gray-500">{UI_TEXT.totalProblems}</p>
-            <p className="text-2xl font-bold text-gray-900">{stats.monthlyProblems.toLocaleString()}{UI_TEXT.problems}</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-3 gap-6">
-        {/* 최근 가입 학원 */}
-        <div className="col-span-2 card">
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-bold text-gray-900 flex items-center gap-2">
               <Building2 className="w-5 h-5 text-primary-500" />
               {UI_TEXT.recentAcademies}
             </h3>
-            <Link href="/admin/academies" className="text-sm text-primary-600 hover:underline">
-              {UI_TEXT.viewAll} →
+            <Link href="/admin/academies" className="text-sm text-primary-600 hover:underline flex items-center gap-1">
+              {UI_TEXT.viewAll}
+              <ExternalLink className="w-4 h-4" />
             </Link>
           </div>
-          <table className="w-full">
-            <thead>
-              <tr className="text-left text-sm text-gray-500 border-b border-gray-100">
-                <th className="pb-3 font-medium">{UI_TEXT.academyName}</th>
-                <th className="pb-3 font-medium">{UI_TEXT.owner}</th>
-                <th className="pb-3 font-medium">{UI_TEXT.plan}</th>
-                <th className="pb-3 font-medium">{UI_TEXT.studentCount}</th>
-                <th className="pb-3 font-medium">{UI_TEXT.status}</th>
-                <th className="pb-3 font-medium">{UI_TEXT.joinDate}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {stats.recentAcademies.map((academy) => (
-                <tr key={academy.id} className="border-b border-gray-50 hover:bg-gray-50">
-                  <td className="py-3 font-medium text-gray-900">{academy.name}</td>
-                  <td className="py-3 text-gray-600">{academy.owner}</td>
-                  <td className="py-3">
-                    <span className={`text-xs px-2 py-1 rounded-full ${planStyles[academy.plan]}`}>
-                      {planLabels[academy.plan]}
-                    </span>
-                  </td>
-                  <td className="py-3 text-gray-600">{academy.studentCount}명</td>
-                  <td className="py-3">
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      academy.status === 'active' ? 'bg-green-100 text-green-700' :
-                      'bg-yellow-100 text-yellow-700'
-                    }`}>
-                      {academy.status === 'active' ? UI_TEXT.active : UI_TEXT.pending}
-                    </span>
-                  </td>
-                  <td className="py-3 text-gray-500 text-sm">{academy.joinDate}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* 문제 생성 TOP 학원 */}
-        <div className="card">
-          <h3 className="font-bold text-gray-900 flex items-center gap-2 mb-6">
-            <BarChart3 className="w-5 h-5 text-primary-500" />
-            {UI_TEXT.topAcademies}
-          </h3>
-          <div className="space-y-4">
-            {stats.topAcademies.map((academy, index) => (
-              <div key={academy.name} className="flex items-center gap-3">
-                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${rankStyles[index]}`}>
-                  {academy.rank}
-                </span>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">{academy.name}</p>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${(academy.problems / 5000) * 100}%`,
-                          backgroundColor: CHART_COLORS[index % CHART_COLORS.length],
-                        }}
-                      />
-                    </div>
-                    <span className="text-xs text-gray-500">{academy.problems.toLocaleString()}</span>
+          <div className="space-y-3">
+            {stats.recentAcademies.map((academy) => (
+              <div
+                key={academy.id}
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                    <Building2 className="w-5 h-5 text-primary-600" />
                   </div>
+                  <div>
+                    <p className="font-medium text-gray-900">{academy.name}</p>
+                    <p className="text-sm text-gray-500">{academy.owner} · {academy.studentCount}명</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs px-2 py-1 rounded-full ${planStyles[academy.plan]}`}>
+                    {planLabels[academy.plan]}
+                  </span>
+                  <span className={`text-xs px-2 py-1 rounded-full ${statusStyles[academy.status]}`}>
+                    {academy.status === 'active' ? UI_TEXT.active : UI_TEXT.pending}
+                  </span>
                 </div>
               </div>
             ))}
           </div>
         </div>
+
+        {/* 최근 고객 문의 (5개) */}
+        <div className="card">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="font-bold text-gray-900 flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-primary-500" />
+              {UI_TEXT.recentInquiries}
+            </h3>
+            <Link href="/admin/support" className="text-sm text-primary-600 hover:underline flex items-center gap-1">
+              {UI_TEXT.viewAll}
+              <ExternalLink className="w-4 h-4" />
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {stats.recentInquiries.map((inquiry) => (
+              <div
+                key={inquiry.id}
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    inquiry.status === 'new' ? 'bg-red-100' :
+                    inquiry.status === 'in_progress' ? 'bg-yellow-100' : 'bg-green-100'
+                  }`}>
+                    <MessageSquare className={`w-5 h-5 ${
+                      inquiry.status === 'new' ? 'text-red-600' :
+                      inquiry.status === 'in_progress' ? 'text-yellow-600' : 'text-green-600'
+                    }`} />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 text-sm">{inquiry.summary}</p>
+                    <p className="text-xs text-gray-500">{inquiry.customer} · {inquiry.academy}</p>
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  <span className={`text-xs px-2 py-1 rounded-full ${inquiryStatusStyles[inquiry.status]}`}>
+                    {inquiryStatusLabels[inquiry.status]}
+                  </span>
+                  <span className="text-xs text-gray-400 flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {inquiry.date.split(' ')[1]}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 학원별 활동 차트 */}
+      <div className="card">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="font-bold text-gray-900 flex items-center gap-2">
+            <Activity className="w-5 h-5 text-primary-500" />
+            {UI_TEXT.academyActivity}
+          </h3>
+          <span className="text-sm text-gray-500">{UI_TEXT.problemsGenerated}</span>
+        </div>
+        <BarChart
+          data={stats.academyActivityData}
+          height={280}
+          showGrid={true}
+          showTooltip={true}
+        />
       </div>
     </div>
   )

@@ -150,7 +150,7 @@ export default function ProblemReview({
   onApplyCorrection,
 }: ProblemReviewProps) {
   // 선택된 AI 모델
-  const [selectedModels, setSelectedModels] = useState<AIModel[]>(['gemini'])
+  const [selectedModels, setSelectedModels] = useState<Set<AIModel>>(() => new Set(['gemini']))
   // 검수 상태
   const [reviewStatus, setReviewStatus] = useState<ReviewStatus>('pending')
   // 현재 검수 중인 모델
@@ -170,14 +170,20 @@ export default function ProblemReview({
 
   // AI 모델 토글
   const toggleModel = useCallback((model: AIModel) => {
-    setSelectedModels((prev) =>
-      prev.includes(model) ? prev.filter((m) => m !== model) : [...prev, model]
-    )
+    setSelectedModels((prev) => {
+      const newSet = new Set(prev)
+      if (newSet.has(model)) {
+        newSet.delete(model)
+      } else {
+        newSet.add(model)
+      }
+      return newSet
+    })
   }, [])
 
   // 검수 실행
   const handleReview = useCallback(async () => {
-    if (selectedModels.length === 0) {
+    if (selectedModels.size === 0) {
       setError('검수에 사용할 AI 모델을 선택해주세요.')
       return
     }
@@ -186,7 +192,7 @@ export default function ProblemReview({
     setError('')
     setReviewSummaries([])
     setStatistics(null)
-    setProgress({ completed: 0, total: problems.length * selectedModels.length })
+    setProgress({ completed: 0, total: problems.length * selectedModels.size })
 
     try {
       const response = await fetch('/api/problems/review', {
@@ -198,7 +204,7 @@ export default function ProblemReview({
             subject,
             grade,
           })),
-          models: selectedModels,
+          models: Array.from(selectedModels),
           subject,
           grade,
         }),
@@ -294,7 +300,7 @@ export default function ProblemReview({
                   onClick={() => toggleModel(model)}
                   disabled={reviewStatus === 'reviewing'}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all ${
-                    selectedModels.includes(model)
+                    selectedModels.has(model)
                       ? 'border-purple-500 bg-purple-50 text-purple-700'
                       : 'border-gray-200 hover:border-gray-300 text-gray-600'
                   } ${reviewStatus === 'reviewing' ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -304,7 +310,7 @@ export default function ProblemReview({
                     style={{ backgroundColor: AI_MODEL_COLORS[model] }}
                   />
                   {AI_MODEL_LABELS[model]}
-                  {selectedModels.includes(model) && <Check className="w-4 h-4" />}
+                  {selectedModels.has(model) && <Check className="w-4 h-4" />}
                 </button>
               ))}
             </div>
@@ -325,12 +331,12 @@ export default function ProblemReview({
               onClick={handleReview}
               disabled={
                 reviewStatus === 'reviewing' ||
-                selectedModels.length === 0 ||
+                selectedModels.size === 0 ||
                 problems.length === 0
               }
               className={`flex-1 py-3 px-4 rounded-xl font-medium flex items-center justify-center gap-2 transition-all ${
                 reviewStatus === 'reviewing' ||
-                selectedModels.length === 0 ||
+                selectedModels.size === 0 ||
                 problems.length === 0
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                   : 'bg-purple-600 text-white hover:bg-purple-700'
@@ -426,7 +432,7 @@ export default function ProblemReview({
             <div className="text-center p-3 bg-white rounded-lg shadow-sm">
               <Shield className="w-6 h-6 text-blue-500 mx-auto mb-1" />
               <p className="text-2xl font-bold text-blue-600">
-                {selectedModels.length}
+                {selectedModels.size}
               </p>
               <p className="text-xs text-gray-500">사용 모델</p>
             </div>

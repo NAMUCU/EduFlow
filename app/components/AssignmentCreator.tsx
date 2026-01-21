@@ -369,7 +369,7 @@ export default function AssignmentCreator({
                                   : 'border-gray-300'
                               }`}
                             >
-                              {isSelected && <Check className="w-3 h-3" />}
+                              {isSelected ? <Check className="w-3 h-3" /> : null}
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm text-gray-900 line-clamp-2">
@@ -475,7 +475,7 @@ export default function AssignmentCreator({
                                   : 'border-gray-300'
                               }`}
                             >
-                              {isSelected && <Check className="w-3 h-3" />}
+                              {isSelected ? <Check className="w-3 h-3" /> : null}
                             </div>
                             <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
                               <span className="text-primary-700 font-medium">

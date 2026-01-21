@@ -1,14 +1,17 @@
 'use client';
 
 import { memo } from 'react';
-import { StudentDetail } from '@/types/student';
+import { AttendanceStats } from '@/types/student';
+import { Attendance } from '@/types/database';
 import { Check, X, Clock } from 'lucide-react';
 
 interface AttendanceTabProps {
-  student: StudentDetail;
+  attendanceStats: AttendanceStats;
+  recentAttendance: Attendance[];
+  attendanceRate: number;
 }
 
-export const AttendanceTab = memo(function AttendanceTab({ student }: AttendanceTabProps) {
+export const AttendanceTab = memo(function AttendanceTab({ attendanceStats, recentAttendance, attendanceRate }: AttendanceTabProps) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6">
       <h3 className="font-bold text-gray-900 mb-4">출결 현황</h3>
@@ -16,28 +19,28 @@ export const AttendanceTab = memo(function AttendanceTab({ student }: Attendance
       {/* 출결 요약 */}
       <div className="grid grid-cols-4 gap-4 mb-6">
         <div className="text-center p-4 bg-green-50 rounded-xl">
-          <p className="text-2xl font-bold text-green-600">{student.attendanceStats?.present || 0}</p>
+          <p className="text-2xl font-bold text-green-600">{attendanceStats?.present || 0}</p>
           <p className="text-sm text-green-600">출석</p>
         </div>
         <div className="text-center p-4 bg-red-50 rounded-xl">
-          <p className="text-2xl font-bold text-red-600">{student.attendanceStats?.absent || 0}</p>
+          <p className="text-2xl font-bold text-red-600">{attendanceStats?.absent || 0}</p>
           <p className="text-sm text-red-600">결석</p>
         </div>
         <div className="text-center p-4 bg-yellow-50 rounded-xl">
-          <p className="text-2xl font-bold text-yellow-600">{student.attendanceStats?.late || 0}</p>
+          <p className="text-2xl font-bold text-yellow-600">{attendanceStats?.late || 0}</p>
           <p className="text-sm text-yellow-600">지각</p>
         </div>
         <div className="text-center p-4 bg-blue-50 rounded-xl">
-          <p className="text-2xl font-bold text-blue-600">{student.stats.attendanceRate}%</p>
+          <p className="text-2xl font-bold text-blue-600">{attendanceRate}%</p>
           <p className="text-sm text-blue-600">출석률</p>
         </div>
       </div>
 
       {/* 최근 출결 기록 */}
-      {student.recentAttendance && student.recentAttendance.length > 0 ? (
+      {recentAttendance && recentAttendance.length > 0 ? (
         <div className="space-y-2">
           <h4 className="font-medium text-gray-700 mb-3">최근 출결 기록</h4>
-          {student.recentAttendance.map((record, index) => (
+          {recentAttendance.map((record, index) => (
             <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
               <span className="text-sm text-gray-600">{record.date}</span>
               <div className="flex items-center gap-2">

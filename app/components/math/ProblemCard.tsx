@@ -63,13 +63,13 @@ export function ProblemCard({
       {/* 헤더 */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          {problem.number && <span className="font-bold text-lg">Q{problem.number}</span>}
+          {problem.number ? <span className="font-bold text-lg">Q{problem.number}</span> : null}
           {problem.difficulty && (
             <span className={`text-xs px-2 py-0.5 rounded ${difficultyColors[problem.difficulty]}`}>
               {difficultyLabels[problem.difficulty]}
             </span>
           )}
-          {problem.type && <span className="text-xs text-gray-500">{problem.type}</span>}
+          {problem.type ? <span className="text-xs text-gray-500">{problem.type}</span> : null}
         </div>
       </div>
 

@@ -287,15 +287,44 @@ interface TabContentProps {
 const TabContent = memo(function TabContent({ activeTab, student }: TabContentProps) {
   switch (activeTab) {
     case 'overview':
-      return <OverviewTab student={student} />;
+      return (
+        <OverviewTab
+          stats={student.stats}
+          recentActivities={student.recentActivities}
+          weakUnits={student.weakUnits}
+        />
+      );
     case 'grades':
-      return <GradesTab student={student} />;
+      return (
+        <GradesTab
+          grades={student.grades}
+          recentGrades={student.recentGrades}
+          studentName={student.name}
+        />
+      );
     case 'assignments':
-      return <AssignmentsTab student={student} />;
+      return (
+        <AssignmentsTab
+          recentAssignments={student.recentAssignments}
+          studentId={student.id}
+        />
+      );
     case 'attendance':
-      return <AttendanceTab student={student} />;
+      return (
+        <AttendanceTab
+          attendanceStats={student.attendanceStats}
+          recentAttendance={student.recentAttendance}
+          attendanceRate={student.stats.attendanceRate}
+        />
+      );
     case 'consultations':
-      return <ConsultationsTab student={student} />;
+      return (
+        <ConsultationsTab
+          consultations={student.consultations}
+          studentId={student.id}
+          studentName={student.name}
+        />
+      );
     case 'weakness':
       return <WeaknessTab student={student} />;
     default:

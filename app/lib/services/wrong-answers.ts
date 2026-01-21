@@ -4,6 +4,16 @@
 import { createServerSupabaseClient, isSupabaseConfigured } from '@/lib/supabase'
 import type { Problem, ProblemOption, ProblemDifficulty, ProblemType } from '@/types/database'
 
+// UUID 형식 체크
+const isValidUUID = (id: string): boolean => {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+}
+
+// Mock 모드 체크 (Supabase 미설정 또는 Mock ID 사용)
+const shouldUseMock = (studentId: string): boolean => {
+  return !isSupabaseConfigured() || !isValidUUID(studentId)
+}
+
 // ============================================
 // 타입 정의
 // ============================================
@@ -221,7 +231,7 @@ export async function getWrongAnswers(filter: WrongAnswerFilter): Promise<{
   total: number
   error?: string
 }> {
-  if (!isSupabaseConfigured()) {
+  if (shouldUseMock(filter.studentId)) {
     // Mock 데이터 필터링
     let filtered = mockWrongAnswers.filter(w => w.student_id === filter.studentId)
 
@@ -660,7 +670,7 @@ export async function getWrongAnswerStats(studentId: string): Promise<{
   data: WrongAnswerStats
   error?: string
 }> {
-  if (!isSupabaseConfigured()) {
+  if (shouldUseMock(studentId)) {
     const studentWrongAnswers = mockWrongAnswers.filter(w => w.student_id === studentId)
 
     const bySubject: Record<string, number> = {}

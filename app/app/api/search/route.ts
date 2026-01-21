@@ -55,7 +55,6 @@ export async function GET(request: NextRequest) {
     const stream = searchParams.get('stream') === 'true'
 
     // 인증 확인
-    const supabase = createServerSupabaseClient()
     const authHeader = request.headers.get('Authorization')
 
     if (!authHeader?.startsWith('Bearer ')) {
@@ -66,6 +65,7 @@ export async function GET(request: NextRequest) {
     }
 
     const token = authHeader.substring(7)
+    const supabase = createServerSupabaseClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser(token)
 
     if (authError || !user) {
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // 사용자의 학원 ID 조회
+    // 사용자의 학원 ID 조회 (인증 성공 후)
     const academyId = await getUserAcademyId(supabase, user.id)
 
     if (!academyId) {
@@ -181,18 +181,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { query, filter, limit = 10, stream = false, model } = body
-
-    if (!query) {
-      return NextResponse.json(
-        { error: '검색어를 입력해주세요.' },
-        { status: 400 }
-      )
-    }
-
-    // 인증 확인
-    const supabase = createServerSupabaseClient()
+    // 인증 헤더 먼저 확인 (빠른 실패)
     const authHeader = request.headers.get('Authorization')
 
     if (!authHeader?.startsWith('Bearer ')) {
@@ -203,7 +192,23 @@ export async function POST(request: NextRequest) {
     }
 
     const token = authHeader.substring(7)
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+
+    // body 파싱과 인증을 병렬 실행
+    const supabase = createServerSupabaseClient()
+    const [body, authResult] = await Promise.all([
+      request.json(),
+      supabase.auth.getUser(token),
+    ])
+
+    const { query, filter, limit = 10, stream = false, model } = body
+    const { data: { user }, error: authError } = authResult
+
+    if (!query) {
+      return NextResponse.json(
+        { error: '검색어를 입력해주세요.' },
+        { status: 400 }
+      )
+    }
 
     if (authError || !user) {
       return NextResponse.json(
@@ -212,7 +217,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 사용자의 학원 ID 조회
+    // 사용자의 학원 ID 조회 (인증 성공 후)
     const academyId = await getUserAcademyId(supabase, user.id)
 
     if (!academyId) {

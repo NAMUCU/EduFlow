@@ -200,7 +200,7 @@ const PointsDisplay = memo(function PointsDisplay({
 
   return (
     <div className={`${sizeClasses[size]} font-bold text-yellow-600 flex items-center gap-1`}>
-      {showIcon && <span>🪙</span>}
+      {showIcon ? <span>🪙</span> : null}
       <span>{points.toLocaleString()}</span>
       <span className="text-gray-400 font-normal text-sm">P</span>
     </div>

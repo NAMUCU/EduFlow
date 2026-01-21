@@ -162,7 +162,7 @@ export function useStudentDetail(
   studentId: string | null,
   options: UseStudentDetailOptions = {}
 ) {
-  const { useParallelFetching = false, refreshInterval = 0 } = options;
+  const { useParallelFetching = true, refreshInterval = 0 } = options;
 
   // SWR 캐시 키
   const cacheKey = studentId ? `student-detail-${studentId}` : null;

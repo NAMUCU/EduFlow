@@ -143,7 +143,7 @@ const SearchResultCard = memo(function SearchResultCard({
             }`}
             aria-label={isSelected ? '선택 해제' : '선택'}
           >
-            {isSelected && <Check className="w-4 h-4" />}
+            {isSelected ? <Check className="w-4 h-4" /> : null}
           </button>
 
           {/* 문서 유형 아이콘 */}

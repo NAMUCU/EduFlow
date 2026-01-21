@@ -166,7 +166,7 @@ const MultipleChoiceInput = memo(function MultipleChoiceInput({
                       alt={`보기 ${choice.id}`}
                       className="max-h-16 rounded-lg"
                     />
-                    {choice.text && <span className="text-gray-700">{choice.text}</span>}
+                    {choice.text ? <span className="text-gray-700">{choice.text}</span> : null}
                   </div>
                 ) : (
                   <span className="font-medium text-gray-800">{choice.text}</span>

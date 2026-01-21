@@ -1,14 +1,17 @@
 'use client';
 
 import { memo } from 'react';
-import { StudentDetail } from '@/types/student';
+import { GradeSummary } from '@/types/student';
+import { Grade } from '@/types/database';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 interface GradesTabProps {
-  student: StudentDetail;
+  grades: GradeSummary[];
+  recentGrades: Grade[];
+  studentName: string;
 }
 
-export const GradesTab = memo(function GradesTab({ student }: GradesTabProps) {
+export const GradesTab = memo(function GradesTab({ grades, recentGrades, studentName }: GradesTabProps) {
   // 점수를 기반으로 등급 계산
   const getGradeRank = (score: number, maxScore: number): number => {
     const percentage = (score / maxScore) * 100;
@@ -23,11 +26,11 @@ export const GradesTab = memo(function GradesTab({ student }: GradesTabProps) {
   return (
     <div className="space-y-6">
       {/* 과목별 성적 요약 */}
-      {student.grades && student.grades.length > 0 && (
+      {grades && grades.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h3 className="font-bold text-gray-900 mb-4">과목별 성적 요약</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {student.grades.map((grade, index) => (
+            {grades.map((grade, index) => (
               <div key={index} className="p-4 bg-gray-50 rounded-xl">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-medium text-gray-900">{grade.subject}</span>
@@ -47,7 +50,7 @@ export const GradesTab = memo(function GradesTab({ student }: GradesTabProps) {
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <h3 className="font-bold text-gray-900 mb-4">최근 성적 기록</h3>
 
-        {student.recentGrades && student.recentGrades.length > 0 ? (
+        {recentGrades && recentGrades.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50">
@@ -60,7 +63,7 @@ export const GradesTab = memo(function GradesTab({ student }: GradesTabProps) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {student.recentGrades.map((grade, index) => {
+                {recentGrades.map((grade, index) => {
                   const rank = getGradeRank(grade.score, grade.max_score);
                   return (
                     <tr key={grade.id || index} className="hover:bg-gray-50">

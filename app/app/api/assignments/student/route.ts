@@ -162,9 +162,11 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1', 10);
     const pageSize = parseInt(searchParams.get('page_size') || '10', 10);
 
-    // 데이터 로드
-    const assignmentsData = await readAssignmentsData();
-    const problemsData = await readProblemsData();
+    // 데이터 로드 (병렬 읽기)
+    const [assignmentsData, problemsData] = await Promise.all([
+      readAssignmentsData(),
+      readProblemsData(),
+    ]);
 
     const { assignments, student_assignments } = assignmentsData;
     const { problems: allProblems } = problemsData;

@@ -67,26 +67,29 @@ export async function POST(request: NextRequest): Promise<NextResponse<GradingRe
       )
     }
 
-    // 4. 학생 존재 여부 확인
-    const supabase = createServerSupabaseClient()
-    const { data: student, error: studentError } = await supabase
-      .from('students')
-      .select('id, user_id')
-      .eq('id', student_id)
-      .single()
+    // 4. 문제 ID 목록 추출 및 중복 제거 (학생 확인과 병렬 실행 준비)
+    const problemIds = [...new Set(answers.map(a => a.problem_id))]
 
+    // 5. 학생 확인과 문제 조회를 병렬 실행
+    const supabase = createServerSupabaseClient()
+    const [studentResult, problemsMap] = await Promise.all([
+      supabase
+        .from('students')
+        .select('id, user_id')
+        .eq('id', student_id)
+        .single(),
+      getProblemsById(problemIds),
+    ])
+
+    const { data: student, error: studentError } = studentResult
+
+    // 학생 존재 여부 확인 (early return)
     if (studentError || !student) {
       return NextResponse.json(
         { success: false, error: '유효하지 않은 학생 ID입니다.' },
         { status: 404 }
       )
     }
-
-    // 5. 문제 ID 목록 추출 및 중복 제거
-    const problemIds = [...new Set(answers.map(a => a.problem_id))]
-
-    // 6. 문제 정보 병렬 조회 (캐싱 적용)
-    const problemsMap = await getProblemsById(problemIds)
 
     // 7. 누락된 문제 확인
     const missingProblems = problemIds.filter(id => !problemsMap.has(id))

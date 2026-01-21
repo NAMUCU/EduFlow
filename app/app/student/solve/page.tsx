@@ -656,24 +656,27 @@ export default function SolvePage() {
   );
 
   // 답안 업데이트 시 맵도 업데이트
+  const answersJson = JSON.stringify(submission.answers);
   useEffect(() => {
     const newMap = new Map<string, { answer: string; imageUrl?: string }>();
     submission.answers.forEach((a) => {
       newMap.set(a.problem_id, { answer: a.answer, imageUrl: a.image_url });
     });
     setAnswerMap(newMap);
-  }, [submission.answers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [answersJson]);
 
   // 타이머 효과
+  const setElapsedTime = submission.setElapsedTime;
   useEffect(() => {
     if (!selectedAssignment || isPaused) return;
 
     const timer = setInterval(() => {
-      submission.setElapsedTime((prev) => prev + 1);
+      setElapsedTime((prev) => prev + 1);
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [selectedAssignment, isPaused, submission]);
+  }, [selectedAssignment, isPaused, setElapsedTime]);
 
   // 시간 포맷
   const formatTime = (seconds: number) => {

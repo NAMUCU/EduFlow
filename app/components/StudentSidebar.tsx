@@ -30,7 +30,7 @@ export default function StudentSidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-64 bg-gradient-to-b from-blue-600 to-blue-700 text-white flex flex-col z-50 md:translate-x-0 transition-transform">
+    <aside className="fixed left-0 top-0 h-full w-64 bg-gradient-to-b from-blue-600 to-blue-700 text-white flex flex-col z-[100] md:translate-x-0 transition-transform">
       {/* 로고 */}
       <div className="p-6 border-b border-white/10">
         <Link href="/student" className="flex items-center gap-3">
@@ -63,7 +63,7 @@ export default function StudentSidebar() {
                 >
                   <item.icon className={`w-5 h-5 ${isActive ? 'text-blue-600' : ''}`} />
                   <span className="font-medium">{item.label}</span>
-                  {isActive && <ChevronRight className="w-4 h-4 ml-auto" />}
+                  {isActive ? <ChevronRight className="w-4 h-4 ml-auto" /> : null}
                 </Link>
               </li>
             )

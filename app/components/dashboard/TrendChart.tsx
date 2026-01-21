@@ -307,8 +307,8 @@ const TrendChart = memo(function TrendChart({
       {(title || periodOptions) && (
         <div className="flex items-center justify-between mb-4">
           <div>
-            {title && <h3 className="font-bold text-gray-900">{title}</h3>}
-            {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
+            {title ? <h3 className="font-bold text-gray-900">{title}</h3> : null}
+            {subtitle ? <p className="text-sm text-gray-500">{subtitle}</p> : null}
           </div>
           {periodOptions && onPeriodChange && (
             <div className="flex gap-1">
@@ -519,8 +519,8 @@ export const MultiSeriesTrendChart = memo(function MultiSeriesTrendChart({
     <div className={`bg-white rounded-2xl p-5 ${className}`}>
       {(title || subtitle) && (
         <div className="mb-4">
-          {title && <h3 className="font-bold text-gray-900">{title}</h3>}
-          {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
+          {title ? <h3 className="font-bold text-gray-900">{title}</h3> : null}
+          {subtitle ? <p className="text-sm text-gray-500">{subtitle}</p> : null}
         </div>
       )}
       <ResponsiveContainer width="100%" height={height}>
@@ -570,8 +570,8 @@ export const ComparisonTrendChart = memo(function ComparisonTrendChart({
     <div className={`bg-white rounded-2xl p-5 ${className}`}>
       {(title || subtitle) && (
         <div className="mb-4">
-          {title && <h3 className="font-bold text-gray-900">{title}</h3>}
-          {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
+          {title ? <h3 className="font-bold text-gray-900">{title}</h3> : null}
+          {subtitle ? <p className="text-sm text-gray-500">{subtitle}</p> : null}
         </div>
       )}
       <ResponsiveContainer width="100%" height={height}>

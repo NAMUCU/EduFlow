@@ -1,21 +1,22 @@
 'use client';
 
 import { memo } from 'react';
-import { StudentDetail } from '@/types/student';
+import { StudentAssignment } from '@/types/database';
 import { CheckCircle, Clock, AlertCircle } from 'lucide-react';
 
 interface AssignmentsTabProps {
-  student: StudentDetail;
+  recentAssignments: StudentAssignment[];
+  studentId: string;
 }
 
-export const AssignmentsTab = memo(function AssignmentsTab({ student }: AssignmentsTabProps) {
+export const AssignmentsTab = memo(function AssignmentsTab({ recentAssignments, studentId }: AssignmentsTabProps) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6">
       <h3 className="font-bold text-gray-900 mb-4">과제 현황</h3>
 
-      {student.recentAssignments && student.recentAssignments.length > 0 ? (
+      {recentAssignments && recentAssignments.length > 0 ? (
         <div className="space-y-3">
-          {student.recentAssignments.map((assignment, index) => {
+          {recentAssignments.map((assignment, index) => {
             const statusValue = assignment.status;
             return (
               <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
