@@ -15,7 +15,7 @@
  * - rerender-memo: 메모이제이션으로 불필요한 리렌더 방지
  */
 
-import { useState, useCallback, useMemo, memo, use } from 'react';
+import { useState, useCallback, useMemo, memo } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import Header from '@/components/Header';
@@ -76,7 +76,7 @@ const GradingResult = dynamic(
 // ============================================
 
 interface PageProps {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }
 
 /** 학생별 채점 결과 */
@@ -585,8 +585,7 @@ const DetailModal = memo(function DetailModal({
 // ============================================
 
 export default function AssignmentGradingPage({ params }: PageProps) {
-  const resolvedParams = use(params);
-  const { id } = resolvedParams;
+  const { id } = params;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'graded' | 'submitted'>('all');

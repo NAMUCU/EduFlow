@@ -81,11 +81,33 @@ export default function StudentForm({
 
   const [errors, setErrors] = useState<FormErrors>({});
 
+  // 전화번호 포맷팅 (숫자만 허용, 자동 하이픈)
+  const formatPhoneNumber = (value: string): string => {
+    // 숫자만 추출
+    const numbers = value.replace(/[^0-9]/g, '');
+
+    // 최대 11자리 제한
+    const limited = numbers.slice(0, 11);
+
+    // 하이픈 자동 추가
+    if (limited.length <= 3) {
+      return limited;
+    } else if (limited.length <= 7) {
+      return `${limited.slice(0, 3)}-${limited.slice(3)}`;
+    } else {
+      return `${limited.slice(0, 3)}-${limited.slice(3, 7)}-${limited.slice(7)}`;
+    }
+  };
+
   // 입력 핸들러
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
+
+    // 전화번호 필드는 숫자만 허용하고 포맷팅
+    const isPhoneField = name === 'phone' || name === 'parent.phone';
+    const processedValue = isPhoneField ? formatPhoneNumber(value) : value;
 
     if (name.startsWith('parent.')) {
       const parentField = name.replace('parent.', '');
@@ -93,13 +115,13 @@ export default function StudentForm({
         ...prev,
         parent: {
           ...prev.parent,
-          [parentField]: value,
+          [parentField]: processedValue,
         },
       }));
     } else {
       setFormData((prev) => ({
         ...prev,
-        [name]: value,
+        [name]: processedValue,
       }));
     }
 
@@ -296,6 +318,7 @@ export default function StudentForm({
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="tel"
+                    inputMode="numeric"
                     name="phone"
                     value={formData.phone}
                     onChange={handleInputChange}
@@ -413,6 +436,7 @@ export default function StudentForm({
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="tel"
+                    inputMode="numeric"
                     name="parent.phone"
                     value={formData.parent.phone}
                     onChange={handleInputChange}

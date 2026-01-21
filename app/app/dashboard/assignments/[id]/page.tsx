@@ -11,7 +11,7 @@
  * - rendering-content-visibility: 제출물 리스트에 content-visibility 적용
  */
 
-import { useState, useCallback, use, memo, useMemo } from 'react';
+import { useState, useCallback, memo, useMemo } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import Header from '@/components/Header';
@@ -91,7 +91,7 @@ const StatisticsChart = dynamic(
 // ============================================
 
 interface PageProps {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }
 
 // ============================================
@@ -493,8 +493,7 @@ const ProblemItem = memo(function ProblemItem({
 // ============================================
 
 export default function AssignmentDetailPage({ params }: PageProps) {
-  const resolvedParams = use(params);
-  const { id } = resolvedParams;
+  const { id } = params;
 
   // client-swr-dedup: SWR 훅으로 데이터 캐싱 및 중복 요청 방지
   // async-parallel: useAssignmentDetailData 내부에서 Promise.all로 병렬 fetching

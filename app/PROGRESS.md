@@ -32,6 +32,59 @@
 
 ## 최신 구현 완료 (2026-01-21)
 
+### 🆕 SVG 템플릿 시스템 (수학 도형 시각화)
+> 문제 생성 시 자동으로 PDF 호환 SVG 이미지 추가 (Desmos/GeoGebra 임베드 대신 정적 SVG 사용)
+
+**아키텍처**: 텍스트 생성 → 이미지 필요 여부 분석 → 템플릿 매칭 → 텍스트 + SVG 병합
+
+- ✅ **템플릿 데이터** (5개 카테고리, 25+ 템플릿)
+  - `data/fewshot/triangles.ts` - 삼각형 (기본, 높이, 직각, 합동, 닮음, 피타고라스, 삼각비)
+  - `data/fewshot/quadrilaterals.ts` - 사각형 (직사각형, 정사각형, 평행사변형, 마름모, 사다리꼴)
+  - `data/fewshot/circles.ts` - 원 (기본, 부채꼴, 호, 접선, 현, 좌표)
+  - `data/fewshot/graphs.ts` - 그래프 (선형, 이차, 삼각함수, 지수, 로그)
+  - `data/fewshot/coordinates.ts` - 좌표평면 (점, 직선, 영역, 거리)
+  - `data/fewshot/illustrations.ts` - DALL-E 일러스트레이션 프롬프트
+
+- ✅ **핵심 라이브러리**
+  - `lib/image-analyzer.ts` - 문제 텍스트 분석 (키워드 기반 빠른 분석 + LLM 정밀 분석)
+  - `lib/template-matcher.ts` - 분석 결과 → 최적 템플릿 매칭
+  - `lib/content-merger.ts` - 텍스트 + SVG 이미지 병합
+  - `lib/pdf-svg-converter.ts` - PDF용 HTML 변환 (인쇄 최적화)
+  - `lib/svg-renderer.ts` - SVG 렌더링 유틸리티
+  - `lib/curriculum-svg-integration.ts` - 커리큘럼 생성기 통합 (단원별 기본 템플릿 매핑)
+
+- ✅ **React 컴포넌트** (`components/fewshot/`)
+  - `SvgPreview.tsx` - SVG 미리보기 (확대/축소, 다운로드, 코드 복사)
+  - `SimpleSvgPreview.tsx` - 간단한 SVG 미리보기
+  - `TemplateSelector.tsx` - 카테고리별 템플릿 목록 + 선택 (memo, content-visibility 최적화)
+  - `TemplateEditor.tsx` - SVG 코드 편집 + 실시간 미리보기
+  - `TemplateCard.tsx` - 템플릿 카드 컴포넌트
+  - `ProblemPreview.tsx` - 문제 + SVG 통합 미리보기 (난이도, 정답/풀이 토글)
+
+- ✅ **Hooks** (`hooks/useSvgTemplates.ts`)
+  - `useSvgTemplates()` - 템플릿 목록 조회, 검색, 텍스트 분석, 콘텐츠 처리
+  - `useTemplatePreview()` - 단일 템플릿 미리보기
+  - `useProblemAnalysis()` - 문제 분석 결과 캐싱 (모듈 레벨 Map 캐시)
+
+- ✅ **API 엔드포인트** (5개)
+  - `GET /api/templates` - 템플릿 목록 (카테고리/키워드 필터)
+  - `POST /api/templates` - 문제 텍스트 → 템플릿 매칭 → 병합 콘텐츠
+  - `POST /api/templates/analyze` - 문제 텍스트 분석 (배치 지원)
+  - `GET /api/templates/preview` - SVG 미리보기
+  - `POST /api/curriculum/generate-with-svg` - 문제 생성 + SVG 자동 추가
+  - `POST /api/curriculum/problem-sheet` - 문제지 생성 (SVG 포함 HTML)
+
+- ✅ **관리자 페이지** (`admin/templates/`)
+  - `page.tsx` - 템플릿 갤러리 + 테스트 도구 + SVG 에디터
+  - `test/page.tsx` - 템플릿 매칭 테스트
+
+- ✅ **Best Practices 최적화**
+  - barrel import 회피 → 직접 파일 import (tree-shaking)
+  - memo() 적용 (TemplateCard, TemplateSelector)
+  - content-visibility: auto (긴 목록 렌더링 최적화)
+  - 모듈 레벨 Map 캐시 (분석 결과 재사용)
+  - willChange 조건부 적용 (SVG 확대/축소)
+
 ### 🆕 슈퍼 어드민 (EduFlow 운영자용)
 - ✅ 어드민 레이아웃 + 사이드바 (`admin/layout.tsx`, `components/AdminSidebar.tsx`)
 - ✅ 메인 대시보드 (`admin/page.tsx`) - 전체 현황, 최근 학원, 최근 문의
@@ -177,21 +230,24 @@
 - `/parent/reports` - 보고서 열람
 - `/parent/consultation` - 상담 내역
 
-### 슈퍼 어드민용 (10개) ✅ NEW
+### 슈퍼 어드민용 (13개) ✅ NEW
 - `/admin` - 메인 대시보드 (전체 현황, 통계 차트)
 - `/admin/academies` - 학원 목록 (검색, 필터, 페이지네이션)
-- `/admin/academies/[id]` - 학원 상세 (정보, 구독, 강사, 활동 로그)
-- `/admin/teachers` - 강사 관리 (검색, 학원별 필터)
+- `/admin/academies/[id]` - 학원 상세 (정보, 구독, 강사, 활동 로그, 결제내역 모달)
+- `/admin/teachers` - 강사 관리 (검색, 학원별 필터, 동적 페이지네이션)
 - `/admin/contents` - 콘텐츠 관리 (문제, 문제집, RAG 문서)
+- `/admin/curriculum` - 커리큘럼 관리 (생성, 삭제 + 비밀번호 인증)
 - `/admin/payments` - 결제 관리 (내역, 통계, 기간 필터)
-- `/admin/support` - 고객지원 (문의 목록, 답변, 상태 관리)
+- `/admin/support` - 고객지원 (문의 목록, 답변, 상태 관리, 미해결 별도 표시)
 - `/admin/notices` - 공지 관리 (생성, 수정, 게시, 고정)
-- `/admin/settings` - 시스템 설정 (일반, API, 요금제, 알림)
+- `/admin/settings` - 시스템 설정 (일반, API, 요금제, 알림 + 비밀번호 보호)
+- `/admin/account` - 계정 설정 (기본정보, 비밀번호, 알림, 로그인 기록) ✅ NEW
 - `/admin/fewshot` - Few-shot 예시 관리
+- `/admin/templates` - SVG 템플릿 갤러리 + 에디터
 
 ---
 
-## 구현된 API (37+개)
+## 구현된 API (45+개)
 
 ### 문제 생성
 - `POST /api/problems/generate` - AI 문제 생성
@@ -228,6 +284,14 @@
 - `POST /api/search` - RAG 검색
 - `POST /api/search/upload` - 문서 업로드
 
+### SVG 템플릿 API (6개) ✅ NEW
+- `GET /api/templates` - 템플릿 목록 (카테고리/키워드 필터)
+- `POST /api/templates` - 문제 텍스트 → 템플릿 매칭 → 병합 콘텐츠
+- `POST /api/templates/analyze` - 문제 텍스트 분석 (배치 지원, 최대 50개)
+- `GET /api/templates/preview` - 단일 템플릿 SVG 미리보기
+- `POST /api/curriculum/generate-with-svg` - 문제 생성 + SVG 자동 추가
+- `POST /api/curriculum/problem-sheet` - 문제지 생성 (SVG 포함 HTML/PDF)
+
 ### 슈퍼 어드민 API (7개) ✅ NEW
 - `GET/POST/PATCH/DELETE /api/admin/academies` - 학원 CRUD
 - `GET /api/admin/academies/[id]` - 학원 상세 (통계, 강사, 로그 포함)
@@ -256,6 +320,7 @@
 | 이미지 처리 | Sharp | ✅ 구현 완료 |
 | 차트 | Recharts | ✅ 구현 완료 |
 | QR 코드 | qrcode, @zxing/library | ✅ 구현 완료 |
+| SVG 도형 | 커스텀 템플릿 시스템 | ✅ 구현 완료 |
 
 ---
 
@@ -297,7 +362,30 @@ KAKAO_SENDER_KEY=
 
 ## 최근 작업 이력
 
-### 2026-01-21 (오늘)
+### 2026-01-21 (오늘) - 추가 작업
+- **슈퍼어드민 기능 강화**
+  - 계정 설정 페이지 생성 (`/admin/account`) - 기본정보, 비밀번호 변경, 알림 설정, 로그인 기록
+  - 시스템 설정 비밀번호 보호 - 읽기 모드 기본, 수정/저장 시 비밀번호 인증
+  - 고객지원 미해결 문의 별도 섹션 - 상단에 pending/in_progress 카드형 표시
+  - 강사 관리 페이지네이션 수정 - 동적 페이지 계산
+  - 커리큘럼 삭제 기능 + 비밀번호 확인 모달
+  - 학원 상세 결제내역 모달 추가
+- **학생 관리 개선**
+  - 학생 수정 기능 추가 (StudentForm 연동)
+  - 전화번호 숫자만 입력 + 자동 하이픈 포맷팅 (010-1234-5678)
+- **학생용 기능 추가**
+  - 오답노트 AI 분석 기능 (Gemini API) - 기간/과목 필터, 일 3회 제한
+- **문제 관리**
+  - 문제집 목록 날짜순 정렬 (최신순)
+
+### 2026-01-21 (이전)
+- **SVG 템플릿 시스템 구현 완료** (20+ 파일, 25+ 템플릿)
+  - 5개 카테고리 템플릿 데이터 (삼각형, 사각형, 원, 그래프, 좌표평면)
+  - 핵심 라이브러리 (image-analyzer, template-matcher, content-merger)
+  - React 컴포넌트 6개 (SvgPreview, TemplateSelector, TemplateEditor, ProblemPreview 등)
+  - API 엔드포인트 6개 (templates/, curriculum/)
+  - 관리자 페이지 2개 (갤러리, 테스트)
+  - Best Practices 최적화 적용 (memo, content-visibility, 캐싱)
 - **Vercel React Best Practices 검수 + 최적화 완료**
   - async-parallel: API 라우트 병렬화 (3개)
   - server-serialization: 탭 props 최소화 (6개)

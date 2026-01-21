@@ -1,6 +1,8 @@
 # EduFlow 개발 진행 현황
 
-> 마지막 업데이트: 2026-01-21 (오후)
+> 마지막 업데이트: 2026-01-21 (저녁)
+>
+> 📌 **최신 상세 진행 상황**: [`app/PROGRESS.md`](../app/PROGRESS.md) 참조
 
 ---
 
@@ -11,9 +13,9 @@
 | Phase 1: 문제 생성 및 배포 시스템 | ✅ 완료 | 100% |
 | Phase 2: 분석 및 피드백 시스템 | ✅ 완료 | 100% |
 | Phase 3: 관리 시스템 | ✅ 완료 | 100% |
-| Phase 4: 테스트 및 런칭 준비 | 🔄 진행 중 | 80% |
+| Phase 4: 테스트 및 런칭 준비 | 🔄 진행 중 | 90% |
 
-**현재 상태: 모든 코드 작업 완료. 환경 변수 설정 + Supabase 테이블 생성 + Vercel 배포만 남음 (사용자 수동 작업)**
+**현재 상태: 모든 코드 작업 완료 (SVG 템플릿 시스템 포함). 환경 변수 설정 + Supabase 테이블 생성 + Vercel 배포만 남음 (사용자 수동 작업)**
 
 ---
 
@@ -115,6 +117,30 @@
 
 ## 추가 구현된 기능 ✅
 
+### SVG 템플릿 시스템 ✅ NEW
+> 문제 생성 시 자동으로 PDF 호환 SVG 이미지 추가
+
+| 항목 | 상태 | 파일 |
+|------|------|------|
+| 삼각형 템플릿 | ✅ | `data/fewshot/triangles.ts` |
+| 사각형 템플릿 | ✅ | `data/fewshot/quadrilaterals.ts` |
+| 원 템플릿 | ✅ | `data/fewshot/circles.ts` |
+| 그래프 템플릿 | ✅ | `data/fewshot/graphs.ts` |
+| 좌표평면 템플릿 | ✅ | `data/fewshot/coordinates.ts` |
+| 이미지 분석기 | ✅ | `lib/image-analyzer.ts` |
+| 템플릿 매처 | ✅ | `lib/template-matcher.ts` |
+| 콘텐츠 병합 | ✅ | `lib/content-merger.ts` |
+| PDF 변환기 | ✅ | `lib/pdf-svg-converter.ts` |
+| 커리큘럼 통합 | ✅ | `lib/curriculum-svg-integration.ts` |
+| SVG 미리보기 | ✅ | `components/fewshot/SvgPreview.tsx` |
+| 템플릿 선택기 | ✅ | `components/fewshot/TemplateSelector.tsx` |
+| 문제 미리보기 | ✅ | `components/fewshot/ProblemPreview.tsx` |
+| 템플릿 API | ✅ | `app/api/templates/route.ts` |
+| 분석 API | ✅ | `app/api/templates/analyze/route.ts` |
+| 문제지 생성 API | ✅ | `app/api/curriculum/problem-sheet/route.ts` |
+| 관리자 페이지 | ✅ | `app/admin/templates/page.tsx` |
+| Hooks | ✅ | `hooks/useSvgTemplates.ts` |
+
 ### 공지사항 시스템
 | 항목 | 상태 | 파일 |
 |------|------|------|
@@ -203,6 +229,8 @@
 - `/admin/settings` - 설정
 - `/admin/contents` - 콘텐츠 관리
 - `/admin/examples` - 예시 관리
+- `/admin/templates` - SVG 템플릿 갤러리 ✅ NEW
+- `/admin/templates/test` - 템플릿 매칭 테스트 ✅ NEW
 
 ### 인증 ✅
 - `/login` - 로그인

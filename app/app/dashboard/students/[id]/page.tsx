@@ -11,7 +11,7 @@
  * - bundle-preload: 탭 hover 시 prefetch
  */
 
-import { useState, useCallback, memo, use } from 'react';
+import { useState, useCallback, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Header from '@/components/Header';
@@ -369,8 +369,7 @@ function ErrorScreen({ error, onBack }: ErrorScreenProps) {
 // 메인 페이지 컴포넌트
 // ============================================
 
-export default function StudentDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = use(params);
+export default function StudentDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
 
@@ -381,7 +380,7 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
    * Vercel Best Practice: async-parallel
    * useParallelFetching: true 옵션으로 병렬 fetching 활성화
    */
-  const { student, isLoading, error } = useStudentDetail(resolvedParams.id, {
+  const { student, isLoading, error } = useStudentDetail(params.id, {
     useParallelFetching: false, // 서버에서 조합된 단일 API 사용 (기본)
     // useParallelFetching: true, // 개별 API 병렬 호출 사용
   });
@@ -443,7 +442,7 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
         <TabNavigation
           activeTab={activeTab}
           onTabChange={handleTabChange}
-          studentId={resolvedParams.id}
+          studentId={params.id}
         />
 
         {/* 탭 내용 */}

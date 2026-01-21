@@ -30,6 +30,10 @@ import {
   ChevronRight,
   Sparkles,
   Target,
+  Brain,
+  TrendingUp,
+  Lightbulb,
+  Heart,
 } from 'lucide-react'
 import WrongAnswerCard from '@/components/student/WrongAnswerCard'
 import type { WrongAnswer, WrongAnswerStats, SimilarProblem } from '@/lib/services/wrong-answers'
@@ -72,6 +76,18 @@ const UI_TEXT = {
   },
   page: '페이지',
   of: '/',
+  aiAnalysis: 'AI 분석',
+  analyzeWrongAnswers: '오답 분석하기',
+  analyzingInProgress: '분석 중...',
+  analysisPeriod: '분석 기간',
+  analysisSubject: '분석 과목',
+  dailyLimitInfo: '일일 분석 가능 횟수',
+  remainingAnalysis: '남은 횟수',
+  analysisResult: '분석 결과',
+  weakPoints: '취약 영역',
+  conceptGaps: '부족한 개념',
+  studyRecommendations: '학습 추천',
+  closeModal: '닫기',
 }
 
 // 과목 목록
@@ -120,6 +136,46 @@ export default function WrongAnswersPage() {
 
   // 필터 패널 표시
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
+
+  // AI 분석 상태
+  const [showAnalysisModal, setShowAnalysisModal] = useState(false)
+  const [analysisSubject, setAnalysisSubject] = useState<string>('all')
+  const [analysisDateFrom, setAnalysisDateFrom] = useState('')
+  const [analysisDateTo, setAnalysisDateTo] = useState('')
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [analysisResult, setAnalysisResult] = useState<{
+    summary: string
+    weakPoints: Array<{
+      area: string
+      description: string
+      frequency: number
+      recommendations: string[]
+    }>
+    conceptGaps: string[]
+    studyRecommendations: string[]
+    encouragement: string
+  } | null>(null)
+  const [analysisError, setAnalysisError] = useState<string | null>(null)
+
+  // 일일 분석 횟수 (localStorage에서 관리)
+  const [dailyAnalysisCount, setDailyAnalysisCount] = useState(0)
+  const MAX_DAILY_ANALYSIS = 3
+
+  // 일일 분석 횟수 로드
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0]
+    const storedData = localStorage.getItem('analysisCount')
+    if (storedData) {
+      const { date, count } = JSON.parse(storedData)
+      if (date === today) {
+        setDailyAnalysisCount(count)
+      } else {
+        // 날짜가 바뀌면 리셋
+        localStorage.setItem('analysisCount', JSON.stringify({ date: today, count: 0 }))
+        setDailyAnalysisCount(0)
+      }
+    }
+  }, [])
 
   // 데이터 로드
   const fetchData = useCallback(async () => {
@@ -295,6 +351,62 @@ export default function WrongAnswersPage() {
     alert(`${totalItems}개의 문제를 다시 풀어보세요!`)
     // TODO: 다시 풀기 페이지로 이동
   }, [totalItems])
+
+  // AI 분석 실행
+  const handleAnalyze = useCallback(async () => {
+    if (dailyAnalysisCount >= MAX_DAILY_ANALYSIS) {
+      setAnalysisError('일일 분석 횟수를 초과했습니다. (하루 3회 제한)')
+      return
+    }
+
+    setIsAnalyzing(true)
+    setAnalysisError(null)
+    setAnalysisResult(null)
+
+    try {
+      const response = await fetch('/api/wrong-answers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-analyze-count': dailyAnalysisCount.toString(),
+        },
+        body: JSON.stringify({
+          action: 'analyze',
+          studentId: MOCK_STUDENT_ID,
+          subject: analysisSubject,
+          dateFrom: analysisDateFrom,
+          dateTo: analysisDateTo,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setAnalysisResult(data.data.analysis)
+        // 분석 횟수 증가
+        const newCount = dailyAnalysisCount + 1
+        setDailyAnalysisCount(newCount)
+        const today = new Date().toISOString().split('T')[0]
+        localStorage.setItem('analysisCount', JSON.stringify({ date: today, count: newCount }))
+      } else {
+        setAnalysisError(data.error || '분석에 실패했습니다.')
+      }
+    } catch (err) {
+      setAnalysisError('서버 연결에 실패했습니다.')
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }, [dailyAnalysisCount, analysisSubject, analysisDateFrom, analysisDateTo])
+
+  // 분석 모달 닫기
+  const closeAnalysisModal = useCallback(() => {
+    setShowAnalysisModal(false)
+    setAnalysisResult(null)
+    setAnalysisError(null)
+    setAnalysisSubject('all')
+    setAnalysisDateFrom('')
+    setAnalysisDateTo('')
+  }, [])
 
   // 정렬 토글
   const toggleSort = useCallback((field: 'wrong_date' | 'subject' | 'difficulty') => {
@@ -579,6 +691,17 @@ export default function WrongAnswersPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* AI 분석 버튼 */}
+          <button
+            onClick={() => setShowAnalysisModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors"
+          >
+            <Brain className="w-4 h-4" />
+            {UI_TEXT.aiAnalysis}
+            <span className="text-xs bg-purple-500 px-2 py-0.5 rounded-full">
+              {MAX_DAILY_ANALYSIS - dailyAnalysisCount}/{MAX_DAILY_ANALYSIS}
+            </span>
+          </button>
           {selectedIds.length > 0 && (
             <button
               onClick={handleRetrySelected}
@@ -707,6 +830,240 @@ export default function WrongAnswersPage() {
           <span className="ml-4 text-sm text-gray-500">
             {UI_TEXT.page} {currentPage} {UI_TEXT.of} {totalPages}
           </span>
+        </div>
+      )}
+
+      {/* AI 분석 모달 */}
+      {showAnalysisModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            {/* 모달 헤더 */}
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                  <Brain className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">{UI_TEXT.aiAnalysis}</h3>
+                  <p className="text-sm text-gray-500">
+                    {UI_TEXT.remainingAnalysis}: {MAX_DAILY_ANALYSIS - dailyAnalysisCount}회
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={closeAnalysisModal}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              {/* 분석 결과가 없을 때: 옵션 선택 */}
+              {!analysisResult && (
+                <div className="space-y-6">
+                  {/* 과목 선택 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {UI_TEXT.analysisSubject}
+                    </label>
+                    <select
+                      value={analysisSubject}
+                      onChange={(e) => setAnalysisSubject(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    >
+                      <option value="all">{UI_TEXT.allSubjects}</option>
+                      {SUBJECTS.map((subject) => (
+                        <option key={subject} value={subject}>
+                          {subject}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* 기간 선택 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {UI_TEXT.analysisPeriod}
+                    </label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">{UI_TEXT.dateFrom}</label>
+                        <input
+                          type="date"
+                          value={analysisDateFrom}
+                          onChange={(e) => setAnalysisDateFrom(e.target.value)}
+                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">{UI_TEXT.dateTo}</label>
+                        <input
+                          type="date"
+                          value={analysisDateTo}
+                          onChange={(e) => setAnalysisDateTo(e.target.value)}
+                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-2">
+                      * 기간을 선택하지 않으면 전체 기간을 분석합니다.
+                    </p>
+                  </div>
+
+                  {/* 에러 메시지 */}
+                  {analysisError && (
+                    <div className="p-4 bg-red-50 text-red-600 rounded-xl flex items-center gap-2">
+                      <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                      <span>{analysisError}</span>
+                    </div>
+                  )}
+
+                  {/* 분석 버튼 */}
+                  <button
+                    onClick={handleAnalyze}
+                    disabled={isAnalyzing || dailyAnalysisCount >= MAX_DAILY_ANALYSIS}
+                    className="w-full py-4 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        {UI_TEXT.analyzingInProgress}
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-5 h-5" />
+                        {UI_TEXT.analyzeWrongAnswers}
+                      </>
+                    )}
+                  </button>
+
+                  {dailyAnalysisCount >= MAX_DAILY_ANALYSIS && (
+                    <p className="text-center text-sm text-orange-500">
+                      오늘의 분석 횟수를 모두 사용했습니다. 내일 다시 시도해주세요.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* 분석 결과 표시 */}
+              {analysisResult && (
+                <div className="space-y-6">
+                  {/* 요약 */}
+                  <div className="p-4 bg-purple-50 rounded-xl">
+                    <p className="text-purple-800 leading-relaxed">{analysisResult.summary}</p>
+                  </div>
+
+                  {/* 취약 영역 */}
+                  {analysisResult.weakPoints && analysisResult.weakPoints.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <TrendingUp className="w-5 h-5 text-red-500" />
+                        {UI_TEXT.weakPoints}
+                      </h4>
+                      <div className="space-y-3">
+                        {analysisResult.weakPoints.map((wp, idx) => (
+                          <div
+                            key={idx}
+                            className="p-4 bg-white border border-gray-200 rounded-xl"
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-medium text-gray-900">{wp.area}</span>
+                              <span className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded-full">
+                                오답 {wp.frequency}회
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-3">{wp.description}</p>
+                            <div className="flex flex-wrap gap-2">
+                              {wp.recommendations.map((rec, recIdx) => (
+                                <span
+                                  key={recIdx}
+                                  className="text-xs px-3 py-1 bg-blue-50 text-blue-700 rounded-full"
+                                >
+                                  💡 {rec}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 부족한 개념 */}
+                  {analysisResult.conceptGaps && analysisResult.conceptGaps.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <Lightbulb className="w-5 h-5 text-yellow-500" />
+                        {UI_TEXT.conceptGaps}
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {analysisResult.conceptGaps.map((concept, idx) => (
+                          <span
+                            key={idx}
+                            className="px-4 py-2 bg-yellow-50 text-yellow-800 rounded-xl text-sm"
+                          >
+                            {concept}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 학습 추천 */}
+                  {analysisResult.studyRecommendations && analysisResult.studyRecommendations.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <Target className="w-5 h-5 text-green-500" />
+                        {UI_TEXT.studyRecommendations}
+                      </h4>
+                      <ul className="space-y-2">
+                        {analysisResult.studyRecommendations.map((rec, idx) => (
+                          <li
+                            key={idx}
+                            className="flex items-start gap-2 text-gray-700"
+                          >
+                            <span className="text-green-500 mt-1">✓</span>
+                            {rec}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* 격려 메시지 */}
+                  {analysisResult.encouragement && (
+                    <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl">
+                      <div className="flex items-start gap-3">
+                        <Heart className="w-5 h-5 text-pink-500 flex-shrink-0 mt-0.5" />
+                        <p className="text-gray-700 leading-relaxed">{analysisResult.encouragement}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 다시 분석 버튼 */}
+                  <div className="flex gap-3">
+                    <button
+                      onClick={closeAnalysisModal}
+                      className="flex-1 py-3 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+                    >
+                      {UI_TEXT.closeModal}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setAnalysisResult(null)
+                        setAnalysisError(null)
+                      }}
+                      disabled={dailyAnalysisCount >= MAX_DAILY_ANALYSIS}
+                      className="flex-1 py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      다시 분석하기 ({MAX_DAILY_ANALYSIS - dailyAnalysisCount}회 남음)
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

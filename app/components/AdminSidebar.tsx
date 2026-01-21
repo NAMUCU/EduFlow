@@ -15,6 +15,7 @@ import {
   ChevronRight,
   Shield,
   Sparkles,
+  BookOpen,
 } from 'lucide-react'
 
 // 슈퍼 어드민용 메뉴 항목
@@ -23,6 +24,7 @@ const menuItems = [
   { icon: Building2, label: '학원 관리', href: '/admin/academies' },
   { icon: Users, label: '강사 관리', href: '/admin/teachers' },
   { icon: FileStack, label: '콘텐츠 관리', href: '/admin/contents' },
+  { icon: BookOpen, label: '커리큘럼', href: '/admin/curriculum' },
   { icon: CreditCard, label: '결제 관리', href: '/admin/payments' },
   { icon: HeadphonesIcon, label: '고객지원', href: '/admin/support' },
   { icon: Megaphone, label: '공지 관리', href: '/admin/notices' },

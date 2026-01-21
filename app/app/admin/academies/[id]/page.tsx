@@ -121,6 +121,17 @@ export default function AcademyDetailPage() {
   const [academy] = useState(mockAcademyDetail)
   const [newNote, setNewNote] = useState('')
   const [notes, setNotes] = useState(mockAcademyDetail.notes)
+  const [showPaymentHistory, setShowPaymentHistory] = useState(false)
+
+  // 목업 결제 내역 데이터
+  const paymentHistory = [
+    { id: 1, date: '2025-01-15', amount: 99000, plan: 'Pro', status: 'success', method: '카카오페이' },
+    { id: 2, date: '2024-12-15', amount: 99000, plan: 'Pro', status: 'success', method: '카카오페이' },
+    { id: 3, date: '2024-11-15', amount: 99000, plan: 'Pro', status: 'success', method: '카카오페이' },
+    { id: 4, date: '2024-10-15', amount: 99000, plan: 'Pro', status: 'success', method: '신용카드' },
+    { id: 5, date: '2024-09-15', amount: 49000, plan: 'Basic', status: 'success', method: '신용카드' },
+    { id: 6, date: '2024-08-15', amount: 49000, plan: 'Basic', status: 'success', method: '신용카드' },
+  ]
 
   const handleAddNote = () => {
     if (!newNote.trim()) return
@@ -251,7 +262,10 @@ export default function AcademyDetailPage() {
                 <CreditCard className="w-5 h-5 text-primary-600" />
                 <h2 className="text-lg font-semibold text-gray-900">구독/결제 정보</h2>
               </div>
-              <button className="text-sm text-primary-600 hover:text-primary-700 font-medium">
+              <button
+                onClick={() => setShowPaymentHistory(true)}
+                className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+              >
                 결제 내역 전체 보기
               </button>
             </div>
@@ -503,6 +517,85 @@ export default function AcademyDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* 결제 내역 모달 */}
+      {showPaymentHistory && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center">
+                  <CreditCard className="w-5 h-5 text-primary-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">결제 내역</h2>
+                  <p className="text-sm text-gray-500">{academy.name}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowPaymentHistory(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <XCircle className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+
+            <div className="p-6 max-h-[60vh] overflow-y-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="text-left text-sm text-gray-500 border-b border-gray-100">
+                    <th className="pb-3 font-medium">결제일</th>
+                    <th className="pb-3 font-medium">플랜</th>
+                    <th className="pb-3 font-medium">결제 금액</th>
+                    <th className="pb-3 font-medium">결제 수단</th>
+                    <th className="pb-3 font-medium">상태</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paymentHistory.map((payment) => (
+                    <tr key={payment.id} className="border-b border-gray-50">
+                      <td className="py-3 text-sm text-gray-900">{payment.date}</td>
+                      <td className="py-3">
+                        <span className={`text-xs px-2 py-1 rounded-full ${planColors[payment.plan]}`}>
+                          {payment.plan}
+                        </span>
+                      </td>
+                      <td className="py-3 text-sm font-medium text-gray-900">
+                        {payment.amount.toLocaleString()}원
+                      </td>
+                      <td className="py-3 text-sm text-gray-600">{payment.method}</td>
+                      <td className="py-3">
+                        <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">
+                          결제 완료
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {/* 결제 요약 */}
+              <div className="mt-6 p-4 bg-gray-50 rounded-xl">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">총 결제 금액 (표시된 기간)</span>
+                  <span className="text-xl font-bold text-gray-900">
+                    {paymentHistory.reduce((sum, p) => sum + p.amount, 0).toLocaleString()}원
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-gray-100 flex justify-end">
+              <button
+                onClick={() => setShowPaymentHistory(false)}
+                className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -25,6 +25,8 @@ import {
   Phone,
   Globe,
   Building2,
+  Lock,
+  Unlock,
 } from 'lucide-react'
 
 // Mock 데이터
@@ -223,10 +225,19 @@ const MOCK_EMAIL_SETTINGS = {
   },
 }
 
+// 관리자 비밀번호 (실제 구현시 환경변수/API 검증)
+const ADMIN_PASSWORD = 'admin1234'
+
 export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = useState('general')
   const [isSaving, setIsSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
+
+  // 수정 모드 및 비밀번호 관련 상태
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [showPasswordModal, setShowPasswordModal] = useState<'unlock' | 'save' | null>(null)
+  const [passwordInput, setPasswordInput] = useState('')
+  const [passwordError, setPasswordError] = useState('')
 
   // 일반 설정
   const [generalSettings, setGeneralSettings] = useState(MOCK_GENERAL_SETTINGS)
@@ -252,14 +263,57 @@ export default function AdminSettingsPage() {
     { id: 'email', label: '이메일/알림', icon: Mail },
   ]
 
-  const handleSave = () => {
+  // 비밀번호 확인 핸들러
+  const handlePasswordSubmit = () => {
+    if (passwordInput !== ADMIN_PASSWORD) {
+      setPasswordError('비밀번호가 올바르지 않습니다.')
+      return
+    }
+
+    if (showPasswordModal === 'unlock') {
+      setIsEditMode(true)
+      setShowPasswordModal(null)
+      setPasswordInput('')
+      setPasswordError('')
+    } else if (showPasswordModal === 'save') {
+      // 저장 실행
+      performSave()
+      setShowPasswordModal(null)
+      setPasswordInput('')
+      setPasswordError('')
+    }
+  }
+
+  // 실제 저장 수행
+  const performSave = () => {
     setIsSaving(true)
     // Mock save
     setTimeout(() => {
       setIsSaving(false)
       setSaveSuccess(true)
+      setIsEditMode(false) // 저장 후 읽기 모드로 전환
       setTimeout(() => setSaveSuccess(false), 2000)
     }, 1000)
+  }
+
+  // 저장 버튼 클릭 (비밀번호 확인 필요)
+  const handleSave = () => {
+    setShowPasswordModal('save')
+    setPasswordInput('')
+    setPasswordError('')
+  }
+
+  // 수정 모드 진입 (비밀번호 확인 필요)
+  const handleUnlock = () => {
+    setShowPasswordModal('unlock')
+    setPasswordInput('')
+    setPasswordError('')
+  }
+
+  // 수정 취소
+  const handleCancelEdit = () => {
+    setIsEditMode(false)
+    // TODO: 변경사항 되돌리기 (필요시 원본 데이터 저장해두고 복원)
   }
 
   const maskApiKey = (key: string) => {
@@ -319,32 +373,77 @@ export default function AdminSettingsPage() {
       {/* 헤더 */}
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">시스템 설정</h1>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            시스템 설정
+            {!isEditMode && (
+              <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full flex items-center gap-1">
+                <Lock className="w-3 h-3" />
+                읽기 모드
+              </span>
+            )}
+            {isEditMode && (
+              <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full flex items-center gap-1">
+                <Unlock className="w-3 h-3" />
+                수정 모드
+              </span>
+            )}
+          </h1>
           <p className="text-gray-500">서비스 전반의 설정을 관리합니다</p>
         </div>
-        <button
-          onClick={handleSave}
-          disabled={isSaving}
-          className="btn-primary flex items-center gap-2"
-        >
-          {isSaving ? (
-            <>
-              <RefreshCw className="w-4 h-4 animate-spin" />
-              저장 중...
-            </>
-          ) : saveSuccess ? (
-            <>
-              <Check className="w-4 h-4" />
-              저장 완료
-            </>
+        <div className="flex items-center gap-2">
+          {!isEditMode ? (
+            <button
+              onClick={handleUnlock}
+              className="btn-primary flex items-center gap-2"
+            >
+              <Unlock className="w-4 h-4" />
+              수정하기
+            </button>
           ) : (
             <>
-              <Save className="w-4 h-4" />
-              변경사항 저장
+              <button
+                onClick={handleCancelEdit}
+                className="btn-secondary flex items-center gap-2"
+              >
+                <X className="w-4 h-4" />
+                취소
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="btn-primary flex items-center gap-2"
+              >
+                {isSaving ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    저장 중...
+                  </>
+                ) : saveSuccess ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    저장 완료
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    변경사항 저장
+                  </>
+                )}
+              </button>
             </>
           )}
-        </button>
+        </div>
       </div>
+
+      {/* 읽기 모드 안내 */}
+      {!isEditMode && (
+        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-center gap-3">
+          <Lock className="w-5 h-5 text-blue-600" />
+          <p className="text-blue-800">
+            현재 읽기 모드입니다. 설정을 변경하려면 <strong>수정하기</strong> 버튼을 클릭하고 관리자 비밀번호를 입력하세요.
+          </p>
+        </div>
+      )}
 
       <div className="flex gap-6">
         {/* 사이드 탭 */}
@@ -386,6 +485,7 @@ export default function AdminSettingsPage() {
                       onChange={(e) =>
                         setGeneralSettings({ ...generalSettings, serviceName: e.target.value })
                       }
+                      disabled={!isEditMode}
                     />
                   </div>
                   <div>
@@ -399,6 +499,7 @@ export default function AdminSettingsPage() {
                         onChange={(e) =>
                           setGeneralSettings({ ...generalSettings, serviceUrl: e.target.value })
                         }
+                        disabled={!isEditMode}
                       />
                     </div>
                   </div>
@@ -409,7 +510,7 @@ export default function AdminSettingsPage() {
                         <ImageIcon className="w-8 h-8 text-gray-400" />
                       </div>
                       <div>
-                        <button className="btn-secondary flex items-center gap-2 mb-2">
+                        <button className="btn-secondary flex items-center gap-2 mb-2" disabled={!isEditMode}>
                           <Upload className="w-4 h-4" />
                           로고 업로드
                         </button>
@@ -440,6 +541,7 @@ export default function AdminSettingsPage() {
                         onChange={(e) =>
                           setGeneralSettings({ ...generalSettings, contactEmail: e.target.value })
                         }
+                        disabled={!isEditMode}
                       />
                     </div>
                   </div>
@@ -454,6 +556,7 @@ export default function AdminSettingsPage() {
                         onChange={(e) =>
                           setGeneralSettings({ ...generalSettings, contactPhone: e.target.value })
                         }
+                        disabled={!isEditMode}
                       />
                     </div>
                   </div>
@@ -466,6 +569,7 @@ export default function AdminSettingsPage() {
                       onChange={(e) =>
                         setGeneralSettings({ ...generalSettings, companyName: e.target.value })
                       }
+                      disabled={!isEditMode}
                     />
                   </div>
                   <div>
@@ -477,6 +581,7 @@ export default function AdminSettingsPage() {
                       onChange={(e) =>
                         setGeneralSettings({ ...generalSettings, businessNumber: e.target.value })
                       }
+                      disabled={!isEditMode}
                     />
                   </div>
                   <div className="col-span-2">
@@ -488,6 +593,7 @@ export default function AdminSettingsPage() {
                       onChange={(e) =>
                         setGeneralSettings({ ...generalSettings, address: e.target.value })
                       }
+                      disabled={!isEditMode}
                     />
                   </div>
                 </div>
@@ -510,6 +616,7 @@ export default function AdminSettingsPage() {
                         onChange={(e) =>
                           setGeneralSettings({ ...generalSettings, termsUrl: e.target.value })
                         }
+                        disabled={!isEditMode}
                       />
                       <a
                         href={generalSettings.termsUrl}
@@ -531,6 +638,7 @@ export default function AdminSettingsPage() {
                         onChange={(e) =>
                           setGeneralSettings({ ...generalSettings, privacyUrl: e.target.value })
                         }
+                        disabled={!isEditMode}
                       />
                       <a
                         href={generalSettings.privacyUrl}
@@ -558,6 +666,7 @@ export default function AdminSettingsPage() {
                 <button
                   onClick={() => setShowAddApiKey(true)}
                   className="btn-primary flex items-center gap-2"
+                  disabled={!isEditMode}
                 >
                   <Plus className="w-4 h-4" />
                   API 키 추가
@@ -709,6 +818,7 @@ export default function AdminSettingsPage() {
                                 ? 'bg-green-100 text-green-600 hover:bg-green-200'
                                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
+                            disabled={!isEditMode}
                           >
                             {apiKey.status === 'active' ? (
                               <Check className="w-4 h-4" />
@@ -719,6 +829,7 @@ export default function AdminSettingsPage() {
                           <button
                             onClick={() => handleDeleteApiKey(apiKey.id)}
                             className="p-2 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors"
+                            disabled={!isEditMode}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -763,6 +874,7 @@ export default function AdminSettingsPage() {
                       <button
                         onClick={() => setEditingPlan(editingPlan === plan.id ? null : plan.id)}
                         className="btn-secondary text-sm"
+                        disabled={!isEditMode}
                       >
                         {editingPlan === plan.id ? '완료' : '편집'}
                       </button>
@@ -957,7 +1069,7 @@ export default function AdminSettingsPage() {
                           {plan.isActive ? '활성화' : '비활성화'}
                         </span>
                       </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
+                      <label className={`relative inline-flex items-center ${isEditMode ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}>
                         <input
                           type="checkbox"
                           className="sr-only peer"
@@ -969,6 +1081,7 @@ export default function AdminSettingsPage() {
                               )
                             )
                           }
+                          disabled={!isEditMode}
                         />
                         <div className="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-primary-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                       </label>
@@ -998,6 +1111,7 @@ export default function AdminSettingsPage() {
                       onChange={(e) =>
                         setEmailSettings({ ...emailSettings, senderEmail: e.target.value })
                       }
+                      disabled={!isEditMode}
                     />
                   </div>
                   <div>
@@ -1009,6 +1123,7 @@ export default function AdminSettingsPage() {
                       onChange={(e) =>
                         setEmailSettings({ ...emailSettings, senderName: e.target.value })
                       }
+                      disabled={!isEditMode}
                     />
                   </div>
                   <div>
@@ -1020,6 +1135,7 @@ export default function AdminSettingsPage() {
                       onChange={(e) =>
                         setEmailSettings({ ...emailSettings, smtpHost: e.target.value })
                       }
+                      disabled={!isEditMode}
                     />
                   </div>
                   <div>
@@ -1031,6 +1147,7 @@ export default function AdminSettingsPage() {
                       onChange={(e) =>
                         setEmailSettings({ ...emailSettings, smtpPort: Number(e.target.value) })
                       }
+                      disabled={!isEditMode}
                     />
                   </div>
                   <div>
@@ -1042,6 +1159,7 @@ export default function AdminSettingsPage() {
                       onChange={(e) =>
                         setEmailSettings({ ...emailSettings, smtpUsername: e.target.value })
                       }
+                      disabled={!isEditMode}
                     />
                   </div>
                   <div>
@@ -1054,6 +1172,7 @@ export default function AdminSettingsPage() {
                         onChange={(e) =>
                           setEmailSettings({ ...emailSettings, smtpPassword: e.target.value })
                         }
+                        disabled={!isEditMode}
                       />
                       <button
                         type="button"
@@ -1070,7 +1189,7 @@ export default function AdminSettingsPage() {
                   </div>
                 </div>
                 <div className="mt-4 flex gap-2">
-                  <button className="btn-secondary flex items-center gap-2">
+                  <button className="btn-secondary flex items-center gap-2" disabled={!isEditMode}>
                     <Send className="w-4 h-4" />
                     테스트 이메일 발송
                   </button>
@@ -1108,8 +1227,8 @@ export default function AdminSettingsPage() {
                         <span className="text-xs text-gray-400">
                           수정: {template.lastModified}
                         </span>
-                        <button className="btn-secondary text-sm">편집</button>
-                        <label className="relative inline-flex items-center cursor-pointer">
+                        <button className="btn-secondary text-sm" disabled={!isEditMode}>편집</button>
+                        <label className={`relative inline-flex items-center ${isEditMode ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}>
                           <input
                             type="checkbox"
                             className="sr-only peer"
@@ -1122,6 +1241,7 @@ export default function AdminSettingsPage() {
                                 ),
                               })
                             }
+                            disabled={!isEditMode}
                           />
                           <div className="w-9 h-5 bg-gray-200 peer-focus:ring-2 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-primary-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
                         </label>
@@ -1181,6 +1301,7 @@ export default function AdminSettingsPage() {
                                     },
                                   })
                                 }
+                                disabled={!isEditMode}
                               />
                             </td>
                             <td className="py-4 px-4 text-center">
@@ -1197,6 +1318,7 @@ export default function AdminSettingsPage() {
                                     },
                                   })
                                 }
+                                disabled={!isEditMode}
                               />
                             </td>
                             <td className="py-4 px-4 text-center">
@@ -1213,6 +1335,7 @@ export default function AdminSettingsPage() {
                                     },
                                   })
                                 }
+                                disabled={!isEditMode}
                               />
                             </td>
                           </tr>
@@ -1226,6 +1349,71 @@ export default function AdminSettingsPage() {
           )}
         </div>
       </div>
+
+      {/* 비밀번호 확인 모달 */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center">
+                <Lock className="w-6 h-6 text-primary-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">
+                  {showPasswordModal === 'unlock' ? '관리자 인증' : '저장 확인'}
+                </h3>
+                <p className="text-sm text-gray-500">
+                  {showPasswordModal === 'unlock'
+                    ? '수정 모드로 전환하려면 비밀번호를 입력하세요.'
+                    : '변경사항을 저장하려면 비밀번호를 입력하세요.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <label className="label">관리자 비밀번호</label>
+              <input
+                type="password"
+                className="input"
+                placeholder="비밀번호 입력"
+                value={passwordInput}
+                onChange={(e) => {
+                  setPasswordInput(e.target.value)
+                  setPasswordError('')
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handlePasswordSubmit()
+                  }
+                }}
+                autoFocus
+              />
+              {passwordError && (
+                <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-4 h-4" />
+                  {passwordError}
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => {
+                  setShowPasswordModal(null)
+                  setPasswordInput('')
+                  setPasswordError('')
+                }}
+                className="btn-secondary"
+              >
+                취소
+              </button>
+              <button onClick={handlePasswordSubmit} className="btn-primary">
+                {showPasswordModal === 'unlock' ? '수정 모드 진입' : '저장'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

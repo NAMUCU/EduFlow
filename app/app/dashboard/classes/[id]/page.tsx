@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, use } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Header from '@/components/Header'
@@ -34,12 +34,12 @@ import {
 } from '@/types/class'
 
 interface PageProps {
-  params: Promise<{ id: string }>
+  params: { id: string }
 }
 
 export default function ClassDetailPage({ params }: PageProps) {
   const router = useRouter()
-  const { id } = use(params)
+  const { id } = params
 
   const [classData, setClassData] = useState<ClassDetail | null>(null)
   const [loading, setLoading] = useState(true)

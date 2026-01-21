@@ -448,6 +448,93 @@ export default function AdminSupportPage() {
           </div>
         </div>
 
+        {/* 미해결 문의 섹션 (pending + in_progress) */}
+        {(stats.pendingCount > 0 || stats.inProgressCount > 0) && (
+          <div className="bg-gradient-to-r from-red-50 to-amber-50 rounded-xl border border-red-200 shadow-sm mb-6 overflow-hidden">
+            <div className="px-6 py-4 border-b border-red-200 bg-red-100/50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <AlertCircle className="w-6 h-6 text-red-600" />
+                  <div>
+                    <h3 className="font-bold text-gray-900">미해결 문의</h3>
+                    <p className="text-sm text-gray-600">
+                      답변이 필요한 문의 {stats.pendingCount + stats.inProgressCount}건
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">
+                    미답변 {stats.pendingCount}
+                  </span>
+                  <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium">
+                    처리중 {stats.inProgressCount}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="p-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-80 overflow-y-auto">
+                {inquiries
+                  .filter((i) => i.status === 'pending' || i.status === 'in_progress')
+                  .sort((a, b) => {
+                    // pending 우선, 그 다음 날짜순
+                    if (a.status === 'pending' && b.status !== 'pending') return -1;
+                    if (a.status !== 'pending' && b.status === 'pending') return 1;
+                    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                  })
+                  .map((inquiry) => (
+                    <div
+                      key={inquiry.id}
+                      onClick={() => setSelectedInquiry(inquiry)}
+                      className={`p-4 rounded-xl cursor-pointer transition-all hover:shadow-md ${
+                        inquiry.status === 'pending'
+                          ? 'bg-white border-2 border-red-200 hover:border-red-400'
+                          : 'bg-white border-2 border-yellow-200 hover:border-yellow-400'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                              STATUS_STYLES[inquiry.status]
+                            }`}
+                          >
+                            {STATUS_LABELS[inquiry.status]}
+                          </span>
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                              TYPE_STYLES[inquiry.type]
+                            }`}
+                          >
+                            {TYPE_LABELS[inquiry.type]}
+                          </span>
+                        </div>
+                        <span className="text-xs text-gray-500">{inquiry.id}</span>
+                      </div>
+                      <h4 className="font-medium text-gray-900 truncate mb-1">{inquiry.title}</h4>
+                      <div className="flex items-center justify-between text-sm text-gray-500">
+                        <span>{inquiry.academyName}</span>
+                        <span>{formatDate(inquiry.createdAt).split(' ')[0]}</span>
+                      </div>
+                      {inquiry.status === 'pending' && (
+                        <div className="mt-2 flex items-center gap-1 text-red-600 text-xs">
+                          <Clock className="w-3 h-3" />
+                          응답 대기중
+                        </div>
+                      )}
+                      {inquiry.status === 'in_progress' && inquiry.assignee && (
+                        <div className="mt-2 flex items-center gap-1 text-yellow-600 text-xs">
+                          <User className="w-3 h-3" />
+                          담당: {inquiry.assignee}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* 검색 및 필터 */}
         <div className="bg-white rounded-xl border shadow-sm mb-6">
           <div className="p-4 flex flex-col sm:flex-row gap-4">

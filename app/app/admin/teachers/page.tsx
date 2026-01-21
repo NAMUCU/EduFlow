@@ -176,6 +176,8 @@ const statusLabels: Record<string, string> = {
   'inactive': '비활성',
 }
 
+const ITEMS_PER_PAGE = 10
+
 export default function SuperAdminTeachersPage() {
   const [teachers] = useState(mockTeachers)
   const [searchTerm, setSearchTerm] = useState('')
@@ -183,6 +185,7 @@ export default function SuperAdminTeachersPage() {
   const [filterStatus, setFilterStatus] = useState('all')
   const [selectedTeacher, setSelectedTeacher] = useState<typeof mockTeachers[0] | null>(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
 
   // 필터링된 강사 목록
   const filteredTeachers = teachers.filter(teacher => {
@@ -193,6 +196,19 @@ export default function SuperAdminTeachersPage() {
     const matchesStatus = filterStatus === 'all' || teacher.status === filterStatus
     return matchesSearch && matchesAcademy && matchesStatus
   })
+
+  // 페이지네이션 계산
+  const totalPages = Math.ceil(filteredTeachers.length / ITEMS_PER_PAGE)
+  const paginatedTeachers = filteredTeachers.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  )
+
+  // 필터 변경 시 첫 페이지로 이동
+  const handleFilterChange = (setter: (value: string) => void, value: string) => {
+    setter(value)
+    setCurrentPage(1)
+  }
 
   // 상세 모달 열기
   const openDetail = (teacher: typeof mockTeachers[0]) => {
@@ -272,13 +288,13 @@ export default function SuperAdminTeachersPage() {
               placeholder="이름, 이메일로 검색..."
               className="input pl-10"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => handleFilterChange(setSearchTerm, e.target.value)}
             />
           </div>
           <select
             className="input w-48"
             value={filterAcademy}
-            onChange={(e) => setFilterAcademy(e.target.value)}
+            onChange={(e) => handleFilterChange(setFilterAcademy, e.target.value)}
           >
             <option value="all">전체 학원</option>
             {academyOptions.map((academy) => (
@@ -290,7 +306,7 @@ export default function SuperAdminTeachersPage() {
           <select
             className="input w-40"
             value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
+            onChange={(e) => handleFilterChange(setFilterStatus, e.target.value)}
           >
             <option value="all">전체 상태</option>
             <option value="active">활성</option>
@@ -316,7 +332,7 @@ export default function SuperAdminTeachersPage() {
             </tr>
           </thead>
           <tbody>
-            {filteredTeachers.map((teacher) => (
+            {paginatedTeachers.map((teacher) => (
               <tr key={teacher.id} className="border-b border-gray-50 hover:bg-gray-50">
                 <td className="px-4 py-4">
                   <div className="flex items-center gap-3">
@@ -389,7 +405,7 @@ export default function SuperAdminTeachersPage() {
         </table>
 
         {/* 결과 없음 */}
-        {filteredTeachers.length === 0 && (
+        {paginatedTeachers.length === 0 && (
           <div className="py-12 text-center text-gray-500">
             검색 결과가 없습니다.
           </div>
@@ -399,17 +415,39 @@ export default function SuperAdminTeachersPage() {
         <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
           <p className="text-sm text-gray-500">
             총 {filteredTeachers.length}명의 강사
+            {totalPages > 1 && ` (${currentPage}/${totalPages} 페이지)`}
           </p>
-          <div className="flex items-center gap-2">
-            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50" disabled>
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <span className="px-3 py-1 bg-primary-500 text-white rounded-lg text-sm">1</span>
-            <button className="px-3 py-1 hover:bg-gray-100 rounded-lg text-sm">2</button>
-            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`px-3 py-1 rounded-lg text-sm transition-colors ${
+                    currentPage === page
+                      ? 'bg-primary-500 text-white'
+                      : 'hover:bg-gray-100'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

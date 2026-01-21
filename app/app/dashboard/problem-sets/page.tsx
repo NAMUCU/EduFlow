@@ -49,18 +49,20 @@ export default function ProblemSetsPage() {
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [showCreateModal, setShowCreateModal] = useState(false)
 
-  // 필터링
-  const filteredSets = problemSets.filter(set => {
-    if (filterType !== 'all' && set.type !== filterType) return false
-    if (filterDate && !set.createdAt.startsWith(filterDate)) return false
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      return set.name.toLowerCase().includes(query) ||
-             set.grade.toLowerCase().includes(query) ||
-             set.assignmentName?.toLowerCase().includes(query)
-    }
-    return true
-  })
+  // 필터링 및 정렬 (날짜 기준 최신순)
+  const filteredSets = problemSets
+    .filter(set => {
+      if (filterType !== 'all' && set.type !== filterType) return false
+      if (filterDate && !set.createdAt.startsWith(filterDate)) return false
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase()
+        return set.name.toLowerCase().includes(query) ||
+               set.grade.toLowerCase().includes(query) ||
+               set.assignmentName?.toLowerCase().includes(query)
+      }
+      return true
+    })
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
   return (
     <div className="p-6">

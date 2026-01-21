@@ -4,7 +4,7 @@ import { useState, useCallback, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import StudentForm from '@/components/StudentForm';
-import { useStudents, createStudent, deleteStudent } from '@/hooks/useStudents';
+import { useStudents, createStudent, updateStudent, deleteStudent } from '@/hooks/useStudents';
 import {
   Plus,
   Search,
@@ -23,6 +23,8 @@ import {
   StudentListItem,
   StudentFilter,
   CreateStudentInput,
+  UpdateStudentInput,
+  StudentBasicInfo,
   StudentStatus,
   GRADE_OPTIONS,
   CLASS_OPTIONS,
@@ -385,6 +387,7 @@ export default function StudentsPage() {
 
   // 모달 상태
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<StudentListItem | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -418,7 +421,7 @@ export default function StudentsPage() {
   }, []);
 
   // 학생 등록 핸들러
-  const handleCreateStudent = async (data: CreateStudentInput | import('@/types/student').UpdateStudentInput) => {
+  const handleCreateStudent = async (data: CreateStudentInput | UpdateStudentInput) => {
     try {
       setIsSubmitting(true);
       const result = await createStudent(data as CreateStudentInput);
@@ -435,6 +438,49 @@ export default function StudentsPage() {
       setIsSubmitting(false);
     }
   };
+
+  // 학생 수정 핸들러
+  const handleUpdateStudent = async (data: CreateStudentInput | UpdateStudentInput) => {
+    if (!selectedStudent) return;
+
+    try {
+      setIsSubmitting(true);
+      const result = await updateStudent(selectedStudent.id, data as UpdateStudentInput);
+
+      if (result.success) {
+        setShowEditModal(false);
+        setSelectedStudent(null);
+      } else {
+        alert(result.error || '학생 정보 수정에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('학생 수정 실패:', error);
+      alert('학생 정보 수정에 실패했습니다.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // StudentListItem을 StudentBasicInfo로 변환
+  const convertToBasicInfo = (student: StudentListItem): StudentBasicInfo => ({
+    id: student.id,
+    name: student.name,
+    email: '',
+    phone: student.phone || '',
+    grade: student.grade,
+    school: student.school,
+    className: student.className || '',
+    subjects: student.subjects,
+    memo: '',
+    status: student.status,
+    enrolledAt: student.enrolledAt,
+    parent: {
+      name: student.parentName,
+      phone: student.parentPhone,
+      email: '',
+      relationship: '모',
+    },
+  });
 
   // 학생 삭제 핸들러
   const handleDeleteStudent = async (studentId: string) => {
@@ -576,7 +622,7 @@ export default function StudentsPage() {
                     }}
                     onEdit={() => {
                       setSelectedStudent(student);
-                      setShowPreviewModal(true);
+                      setShowEditModal(true);
                       setActiveDropdown(null);
                     }}
                     onDelete={() => {
@@ -602,6 +648,20 @@ export default function StudentsPage() {
         />
       )}
 
+      {/* 학생 수정 모달 */}
+      {showEditModal && selectedStudent && (
+        <StudentForm
+          mode="edit"
+          initialData={convertToBasicInfo(selectedStudent)}
+          onSubmit={handleUpdateStudent}
+          onClose={() => {
+            setShowEditModal(false);
+            setSelectedStudent(null);
+          }}
+          isLoading={isSubmitting}
+        />
+      )}
+
       {/* 학생 미리보기 모달 */}
       {showPreviewModal && selectedStudent && (
         <StudentPreviewModal
@@ -615,7 +675,7 @@ export default function StudentsPage() {
           }}
           onEdit={() => {
             setShowPreviewModal(false);
-            // 수정 모달로 전환하는 로직 필요시 추가
+            setShowEditModal(true);
           }}
         />
       )}
