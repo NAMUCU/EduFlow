@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback, useContext } from 'react'
 import Header from '@/components/Header'
 import dynamic from 'next/dynamic'
+import { AuthContext } from '@/contexts/AuthContext'
 
 // bundle-dynamic-imports 규칙: AI 검수 패널은 조건부 렌더링이므로 lazy load
 const ProblemReview = dynamic(
@@ -74,6 +75,9 @@ const requestOptions = [
 ]
 
 export default function ProblemsPage() {
+  const { user } = useContext(AuthContext)
+  const academyId = user?.academyId || null
+
   const [mode, setMode] = useState<'unit' | 'mockexam'>('unit')
   const [step, setStep] = useState<'config' | 'generating' | 'result' | 'error'>('config')
   const [config, setConfig] = useState({
@@ -105,6 +109,8 @@ export default function ProblemsPage() {
   const [autoReview, setAutoReview] = useState(false)
   // 일괄 검수 진행 상태
   const [isBatchReviewing, setIsBatchReviewing] = useState(false)
+  // 저장 진행 상태
+  const [isSaving, setIsSaving] = useState(false)
 
   // 현재 선택된 단원의 커리큘럼 정보
   const getCurrentCurriculum = () => {
@@ -154,13 +160,17 @@ export default function ProblemsPage() {
             ...config,
             mode: 'unit',
             curriculum,
-            additionalRequests: additionalRequests.filter(r => r.value.trim())
+            additionalRequests: additionalRequests.filter(r => r.value.trim()),
+            academyId, // RAG 검색용
+            useRag: !!academyId, // academyId가 있으면 RAG 사용
           }
         : {
             ...mockExamConfig,
             mode: 'mockexam',
             units: unitsBySubject[mockExamConfig.subject]?.[mockExamConfig.grade] || [],
-            additionalRequests: additionalRequests.filter(r => r.value.trim())
+            additionalRequests: additionalRequests.filter(r => r.value.trim()),
+            academyId, // RAG 검색용
+            useRag: !!academyId, // academyId가 있으면 RAG 사용
           }
 
       const response = await fetch('/api/generate-problems', {
@@ -228,6 +238,52 @@ export default function ProblemsPage() {
     setIsBatchReviewing(true)
     setShowReview(true)
   }, [generatedProblems.length])
+
+  // 저장 핸들러
+  const handleSave = async () => {
+    if (selectedProblems.length === 0) {
+      alert('저장할 문제를 선택해주세요.')
+      return
+    }
+
+    setIsSaving(true)
+    const currentConfig = mode === 'unit' ? config : mockExamConfig
+
+    try {
+      const problemsToSave = generatedProblems.filter(p => selectedProblems.includes(p.id))
+      let savedCount = 0
+
+      for (const problem of problemsToSave) {
+        const response = await fetch('/api/problems', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            subject: currentConfig.subject,
+            grade: currentConfig.grade,
+            unit: problem.unit || (mode === 'unit' ? config.unit : null),
+            question: problem.question,
+            answer: problem.answer,
+            solution: problem.solution,
+            difficulty: problem.difficulty,
+            type: problem.type,
+            ai_generated: true,
+          }),
+        })
+
+        if (response.ok) {
+          savedCount++
+        }
+      }
+
+      alert(`${savedCount}개의 문제가 저장되었습니다.`)
+      // 저장 후 저장된 문제 페이지로 이동하거나 상태 초기화
+    } catch (err) {
+      console.error('저장 오류:', err)
+      alert('문제 저장 중 오류가 발생했습니다.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   // 문제별 검수 상태 가져오기
   const getReviewStatusForProblem = useCallback((problemId: number): {
@@ -746,9 +802,13 @@ export default function ProblemsPage() {
                     <Shield className="w-4 h-4" />
                     {reviewSummaries.length > 0 ? '검수 결과' : '일괄 검수'}
                   </button>
-                  <button className="btn-primary flex items-center gap-2">
+                  <button
+                    onClick={handleSave}
+                    disabled={isSaving || selectedProblems.length === 0}
+                    className="btn-primary flex items-center gap-2 disabled:opacity-50"
+                  >
                     <Download className="w-4 h-4" />
-                    저장 ({selectedProblems.length})
+                    {isSaving ? '저장 중...' : `저장 (${selectedProblems.length})`}
                   </button>
                 </div>
               </div>

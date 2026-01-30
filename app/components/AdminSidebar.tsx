@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard,
   Building2,
@@ -17,6 +17,7 @@ import {
   Sparkles,
   BookOpen,
 } from 'lucide-react'
+import { useAuth } from '@/hooks/useAuth'
 
 // 슈퍼 어드민용 메뉴 항목
 const menuItems = [
@@ -38,6 +39,13 @@ const bottomMenuItems = [
 
 export default function AdminSidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+  const { logout } = useAuth()
+
+  const handleLogout = async () => {
+    await logout()
+    window.location.href = '/login'
+  }
 
   return (
     <aside className="fixed left-0 top-0 h-full w-64 bg-gradient-to-b from-violet-700 via-indigo-700 to-indigo-800 text-white flex flex-col z-[100] md:translate-x-0 transition-transform">
@@ -93,7 +101,10 @@ export default function AdminSidebar() {
             <span className="font-medium">{item.label}</span>
           </Link>
         ))}
-        <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-violet-100 hover:bg-white/10 hover:text-white transition-all">
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-violet-100 hover:bg-white/10 hover:text-white transition-all"
+        >
           <LogOut className="w-5 h-5" />
           <span className="font-medium">로그아웃</span>
         </button>

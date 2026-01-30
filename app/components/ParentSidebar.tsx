@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard,
   FileBarChart,
@@ -12,6 +12,7 @@ import {
   ChevronRight,
   User,
 } from 'lucide-react'
+import { useAuth } from '@/hooks/useAuth'
 
 // 메뉴 항목 정의
 const menuItems = [
@@ -24,6 +25,13 @@ const menuItems = [
 
 export default function ParentSidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+  const { logout } = useAuth()
+
+  const handleLogout = async () => {
+    await logout()
+    window.location.href = '/login'
+  }
 
   return (
     <div className="w-64 bg-gradient-to-b from-indigo-900 to-purple-900 text-white min-h-screen flex flex-col">
@@ -95,7 +103,10 @@ export default function ParentSidebar() {
             <p className="text-xs text-indigo-300">학부모</p>
           </div>
         </div>
-        <button className="w-full flex items-center gap-3 px-4 py-3 text-indigo-200 hover:text-white hover:bg-white/10 rounded-xl transition-all">
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-4 py-3 text-indigo-200 hover:text-white hover:bg-white/10 rounded-xl transition-all"
+        >
           <LogOut className="w-5 h-5" />
           <span>로그아웃</span>
         </button>

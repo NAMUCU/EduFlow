@@ -1,7 +1,8 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { NextRequest, NextResponse } from 'next/server'
+import { searchDocuments } from '@/lib/rag-pgvector'
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '')
 
 // 추가 요청사항 옵션 라벨
 const requestOptionLabels: Record<string, string> = {
@@ -18,11 +19,12 @@ const requestOptionLabels: Record<string, string> = {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { mode = 'unit', additionalRequests = [] } = body
+    const { mode = 'unit', additionalRequests = [], academyId, useRag = true } = body
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' })
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' })
 
     let prompt: string
+    let ragContext = ''
 
     // 추가 요청사항 문자열 생성
     const additionalRequestsText = additionalRequests.length > 0
@@ -30,6 +32,39 @@ export async function POST(request: NextRequest) {
           `- ${requestOptionLabels[req.option] || req.option}: ${req.value}`
         ).join('\n')}`
       : ''
+
+    // RAG 컨텍스트 검색 (academyId가 있고 useRag가 true인 경우)
+    if (academyId && useRag) {
+      try {
+        const { subject, grade, unit } = body
+        const searchQuery = mode === 'mockexam'
+          ? `${grade} ${subject} 기출문제 시험문제`
+          : `${grade} ${subject} ${unit} 기출문제 예시문제`
+
+        const ragResult = await searchDocuments({
+          query: searchQuery,
+          academyId,
+          topK: 5,
+          threshold: 0.6,
+          filters: {
+            subject,
+            grade,
+          },
+        })
+
+        if (ragResult.results.length > 0) {
+          ragContext = `\n## 참고 자료 (기출문제/교과서에서 검색된 내용 - 이를 참고하여 유사한 스타일로 출제)\n`
+          ragResult.results.forEach((doc, i) => {
+            ragContext += `\n### 참고자료 ${i + 1} (${doc.metadata?.source_filename || '출처 미상'})\n`
+            ragContext += doc.content.slice(0, 1000) // 최대 1000자
+            ragContext += '\n'
+          })
+        }
+      } catch (ragError) {
+        console.error('RAG 검색 오류 (무시하고 계속):', ragError)
+        // RAG 오류는 무시하고 진행
+      }
+    }
 
     if (mode === 'mockexam') {
       // 모의고사 모드
@@ -68,6 +103,7 @@ ${additionalRequestsText}
 - 풀이는 학생이 이해하기 쉽게 단계별로 작성
 ${difficultyMix ? '- 난이도 하/중/상을 적절히 배분 (예: 하 30%, 중 40%, 상 30%)' : ''}
 - JSON 형식만 출력 (마크다운 코드블록 없이)
+${ragContext}
 `
     } else {
       // 단원별 생성 모드
@@ -118,6 +154,7 @@ ${additionalRequestsText}
 - ${type} 유형에 맞는 문제 형식
 - 커리큘럼의 핵심 개념과 학습 목표를 반영하여 출제
 - JSON 형식만 출력 (마크다운 코드블록 없이)
+${ragContext}
 `
     }
 
