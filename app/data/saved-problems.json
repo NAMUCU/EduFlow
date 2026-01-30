@@ -1,7 +1,117 @@
 {
   "version": "1.0.0",
-  "lastModified": "2025-01-20T09:00:00Z",
+  "lastModified": "2026-01-30T06:11:30.363Z",
   "problems": [
+    {
+      "id": "saved-12c69b9f-069b-4063-8863-2e9539c43d63",
+      "subject": "수학",
+      "grade": "중3",
+      "unit": "이차방정식",
+      "question": "x에 대한 이차방정식 x² - 2(k-1)x + k² - 3 = 0 이 서로 다른 두 실근을 갖도록 하는 가장 큰 정수 k의 값을 구하시오.",
+      "answer": "1",
+      "solution": "이차방정식이 서로 다른 두 실근을 가지려면 판별식 D > 0 이어야 합니다.\n1. 주어진 이차방정식 x² - 2(k-1)x + k² - 3 = 0 에서 계수를 확인합니다.\n   a = 1, b = -2(k-1), c = k² - 3\n2. x의 계수가 짝수이므로 판별식 D/4 > 0 을 사용합니다. (b' = b/2 = -(k-1))\n   D/4 = (b')² - ac > 0\n   (-(k-1))² - 1 * (k² - 3) > 0\n3. 부등식을 전개하고 정리합니다.\n   (k-1)² - (k² - 3) > 0\n   (k² - 2k + 1) - k² + 3 > 0\n   -2k + 4 > 0\n4. k에 대한 일차부등식을 풉니다.\n   -2k > -4\n   k < 2 (부등호의 양변을 음수로 나누었으므로 부등호 방향이 바뀝니다)\n5. 조건을 만족하는 k의 범위는 k < 2 입니다. 이 범위에 속하는 가장 큰 정수는 1입니다.",
+      "difficulty": "중",
+      "type": "계산형",
+      "options": null,
+      "image_url": null,
+      "tags": null,
+      "academy_id": null,
+      "created_by": null,
+      "is_public": false,
+      "ai_generated": true,
+      "created_at": "2026-01-30T06:11:30.363Z",
+      "updated_at": "2026-01-30T06:11:30.363Z",
+      "saved_at": "2026-01-30T06:11:30.363Z",
+      "use_count": 0
+    },
+    {
+      "id": "saved-a7e202e8-2c72-4cbd-b01a-15e657c86c12",
+      "subject": "수학",
+      "grade": "중3",
+      "unit": "이차방정식",
+      "question": "이차방정식 3x² - 4x - 2 = 0 의 두 근을 x = (A ± √B) / 3 라고 할 때, 유리수 A, B에 대하여 A+B의 값을 구하시오.",
+      "answer": "12",
+      "solution": "이차방정식의 해를 구하기 위해 근의 공식을 이용합니다.\n1. 주어진 이차방정식 3x² - 4x - 2 = 0 에서 계수를 확인합니다.\n   a = 3, b = -4, c = -2\n2. 짝수 근의 공식 x = [-b' ± √(b'² - ac)] / a 를 사용합니다. (b' = b/2 = -2)\n   x = [-(-2) ± √((-2)² - 3*(-2))] / 3\n3. 식을 계산합니다.\n   x = [2 ± √(4 + 6)] / 3\n   x = (2 ± √10) / 3\n4. 문제에서 주어진 해의 형태 x = (A ± √B) / 3 와 비교합니다.\n   A = 2, B = 10\n5. 따라서 A+B의 값은 2 + 10 = 12 입니다.",
+      "difficulty": "중",
+      "type": "계산형",
+      "options": null,
+      "image_url": null,
+      "tags": null,
+      "academy_id": null,
+      "created_by": null,
+      "is_public": false,
+      "ai_generated": true,
+      "created_at": "2026-01-30T06:11:30.337Z",
+      "updated_at": "2026-01-30T06:11:30.337Z",
+      "saved_at": "2026-01-30T06:11:30.337Z",
+      "use_count": 0
+    },
+    {
+      "id": "saved-ce48fc15-da88-4b95-bf65-7c556948b276",
+      "subject": "수학",
+      "grade": "중3",
+      "unit": "이차방정식",
+      "question": "이차방정식 x² + 5x - 6 = 0 의 두 근 중 작은 근을 a라고 할 때, 이차방정식 3x² + ax = 12 의 두 근의 합을 구하시오.",
+      "answer": "2",
+      "solution": "이 문제는 두 단계로 나누어 해결합니다.\n1. **첫 번째 이차방정식의 근 구하기**:\n   - 방정식: x² + 5x - 6 = 0\n   - 인수분해: (x+6)(x-1) = 0\n   - 두 근: x = -6 또는 x = 1\n   - 문제에서 '작은 근'을 a라고 했으므로, a = -6 입니다.\n\n2. **두 번째 이차방정식의 두 근의 합 구하기**:\n   - a = -6을 두 번째 방정식 3x² + ax = 12에 대입합니다.\n   - 3x² - 6x = 12\n   - 이차방정식의 일반형 (ax²+bx+c=0)으로 정리합니다: 3x² - 6x - 12 = 0\n   - 이차방정식의 근과 계수의 관계에 따라, 두 근의 합은 -b/a 입니다.\n   - 여기서 계수는 a=3, b=-6, c=-12 입니다.\n   - 두 근의 합 = -(-6) / 3 = 6 / 3 = 2\n\n따라서 최종 정답은 2 입니다.",
+      "difficulty": "중",
+      "type": "계산형",
+      "options": null,
+      "image_url": null,
+      "tags": null,
+      "academy_id": null,
+      "created_by": null,
+      "is_public": false,
+      "ai_generated": true,
+      "created_at": "2026-01-30T06:05:27.308Z",
+      "updated_at": "2026-01-30T06:05:27.308Z",
+      "saved_at": "2026-01-30T06:05:27.308Z",
+      "use_count": 0
+    },
+    {
+      "id": "saved-c8a679ea-ef58-4abc-88ef-a95a09e24705",
+      "subject": "수학",
+      "grade": "중3",
+      "unit": "이차방정식",
+      "question": "x에 대한 이차방정식 x² - 2(k-1)x + k² - 3 = 0 이 중근을 가질 때, 상수 k의 값을 구하시오.",
+      "answer": "2",
+      "solution": "이차방정식이 중근을 가지려면 판별식 D=0 이어야 합니다. 짝수 공식을 이용하면 더 편리합니다. 판별식 D/4 = (b')² - ac = 0 을 이용합니다.\n1. **계수 확인**: a=1, b' = -(k-1), c = k² - 3 입니다.\n2. **판별식 설정**: D/4 = [-(k-1)]² - 1 * (k² - 3) = 0\n3. **방정식 전개**: (k-1)² - (k² - 3) = 0\n                  (k² - 2k + 1) - k² + 3 = 0\n4. **방정식 정리**: k² 항이 소거되고, -2k + 4 = 0 이 남습니다.\n5. **k 값 계산**: 2k = 4, 따라서 k = 2 입니다.\n6. **확인**: k=2를 원래 방정식에 대입하면 x² - 2x + 1 = 0, 즉 (x-1)² = 0 이 되어 중근 x=1을 갖는 것을 확인할 수 있습니다.",
+      "difficulty": "중",
+      "type": "계산형",
+      "options": null,
+      "image_url": null,
+      "tags": null,
+      "academy_id": null,
+      "created_by": null,
+      "is_public": false,
+      "ai_generated": true,
+      "created_at": "2026-01-30T06:05:27.296Z",
+      "updated_at": "2026-01-30T06:05:27.296Z",
+      "saved_at": "2026-01-30T06:05:27.296Z",
+      "use_count": 0
+    },
+    {
+      "id": "saved-e85db2be-57ef-47cc-a183-4228062d9029",
+      "subject": "수학",
+      "grade": "중3",
+      "unit": "이차방정식",
+      "question": "이차방정식 2x² - 6x + 1 = 0의 근을 근의 공식을 이용하여 구했을 때, x = (A ± √B) / 2 이다. 이때, 유리수 A, B에 대하여 A+B의 값을 구하시오.",
+      "answer": "10",
+      "solution": "주어진 이차방정식 2x² - 6x + 1 = 0을 근의 공식 x = [-b ± √(b²-4ac)] / 2a 에 대입하여 풉니다.\n1. **계수 확인**: a=2, b=-6, c=1 입니다.\n2. **근의 공식 대입**: x = [-(-6) ± √((-6)² - 4 * 2 * 1)] / (2 * 2)\n3. **계산**: x = [6 ± √(36 - 8)] / 4\n             x = [6 ± √28] / 4\n4. **루트 단순화**: √28 = √(4 * 7) = 2√7 이므로, x = (6 ± 2√7) / 4\n5. **약분**: 분자와 분모를 2로 나누면, x = (3 ± √7) / 2\n6. **A, B 값 찾기**: 문제의 형태 x = (A ± √B) / 2 와 비교하면, A = 3, B = 7 입니다.\n7. **최종 답 계산**: 따라서 A + B = 3 + 7 = 10 입니다.",
+      "difficulty": "중",
+      "type": "계산형",
+      "options": null,
+      "image_url": null,
+      "tags": null,
+      "academy_id": null,
+      "created_by": null,
+      "is_public": false,
+      "ai_generated": true,
+      "created_at": "2026-01-30T06:05:27.279Z",
+      "updated_at": "2026-01-30T06:05:27.279Z",
+      "saved_at": "2026-01-30T06:05:27.279Z",
+      "use_count": 0
+    },
     {
       "id": "saved-001",
       "subject": "수학",
@@ -14,7 +124,11 @@
       "type": "short_answer",
       "options": null,
       "image_url": null,
-      "tags": ["음수", "양수", "정수"],
+      "tags": [
+        "음수",
+        "양수",
+        "정수"
+      ],
       "academy_id": "academy-001",
       "created_by": "user-001",
       "is_public": false,
@@ -37,7 +151,11 @@
       "type": "short_answer",
       "options": null,
       "image_url": null,
-      "tags": ["정수", "덧셈", "뺄셈"],
+      "tags": [
+        "정수",
+        "덧셈",
+        "뺄셈"
+      ],
       "academy_id": "academy-001",
       "created_by": "user-001",
       "is_public": false,
@@ -60,7 +178,11 @@
       "type": "short_answer",
       "options": null,
       "image_url": null,
-      "tags": ["일차함수", "기울기", "y절편"],
+      "tags": [
+        "일차함수",
+        "기울기",
+        "y절편"
+      ],
       "academy_id": "academy-001",
       "created_by": "user-001",
       "is_public": true,
@@ -83,7 +205,10 @@
       "type": "short_answer",
       "options": null,
       "image_url": null,
-      "tags": ["이차방정식", "인수분해"],
+      "tags": [
+        "이차방정식",
+        "인수분해"
+      ],
       "academy_id": "academy-001",
       "created_by": "user-001",
       "is_public": false,
@@ -106,7 +231,10 @@
       "type": "short_answer",
       "options": null,
       "image_url": null,
-      "tags": ["be동사", "문법"],
+      "tags": [
+        "be동사",
+        "문법"
+      ],
       "academy_id": "academy-001",
       "created_by": "user-001",
       "is_public": true,
@@ -129,7 +257,11 @@
       "type": "short_answer",
       "options": null,
       "image_url": null,
-      "tags": ["비교급", "최상급", "문법"],
+      "tags": [
+        "비교급",
+        "최상급",
+        "문법"
+      ],
       "academy_id": "academy-001",
       "created_by": "user-001",
       "is_public": false,
@@ -152,7 +284,11 @@
       "type": "short_answer",
       "options": null,
       "image_url": null,
-      "tags": ["문자식", "동류항", "계산"],
+      "tags": [
+        "문자식",
+        "동류항",
+        "계산"
+      ],
       "academy_id": "academy-001",
       "created_by": "user-001",
       "is_public": false,
@@ -175,7 +311,11 @@
       "type": "essay",
       "options": null,
       "image_url": null,
-      "tags": ["연립방정식", "실생활", "문장제"],
+      "tags": [
+        "연립방정식",
+        "실생활",
+        "문장제"
+      ],
       "academy_id": "academy-001",
       "created_by": "user-001",
       "is_public": false,
@@ -197,14 +337,37 @@
       "difficulty": "easy",
       "type": "multiple_choice",
       "options": [
-        {"id": "1", "text": "2x + 1 = 5", "is_correct": false},
-        {"id": "2", "text": "3x - 2 = 7", "is_correct": true},
-        {"id": "3", "text": "x + 4 = 6", "is_correct": false},
-        {"id": "4", "text": "5x - 10 = 5", "is_correct": false},
-        {"id": "5", "text": "2x + 3 = 10", "is_correct": false}
+        {
+          "id": "1",
+          "text": "2x + 1 = 5",
+          "is_correct": false
+        },
+        {
+          "id": "2",
+          "text": "3x - 2 = 7",
+          "is_correct": true
+        },
+        {
+          "id": "3",
+          "text": "x + 4 = 6",
+          "is_correct": false
+        },
+        {
+          "id": "4",
+          "text": "5x - 10 = 5",
+          "is_correct": false
+        },
+        {
+          "id": "5",
+          "text": "2x + 3 = 10",
+          "is_correct": false
+        }
       ],
       "image_url": null,
-      "tags": ["일차방정식", "객관식"],
+      "tags": [
+        "일차방정식",
+        "객관식"
+      ],
       "academy_id": "academy-001",
       "created_by": "user-001",
       "is_public": true,
@@ -227,7 +390,11 @@
       "type": "short_answer",
       "options": null,
       "image_url": null,
-      "tags": ["일반동사", "부정문", "문법"],
+      "tags": [
+        "일반동사",
+        "부정문",
+        "문법"
+      ],
       "academy_id": "academy-001",
       "created_by": "user-001",
       "is_public": false,

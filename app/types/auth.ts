@@ -5,8 +5,8 @@
  * Supabase Auth와 호환되는 구조로 설계되어 있습니다.
  */
 
-// 사용자 역할 (admin: 관리자, teacher: 선생님, student: 학생, parent: 학부모)
-export type UserRole = 'admin' | 'teacher' | 'student' | 'parent';
+// 사용자 역할 (super_admin: 시스템 관리자, admin: 학원 관리자, teacher: 선생님, student: 학생, parent: 학부모)
+export type UserRole = 'super_admin' | 'admin' | 'teacher' | 'student' | 'parent';
 
 // 사용자 정보 타입
 export interface User {

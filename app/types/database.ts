@@ -411,6 +411,11 @@ export interface Database {
         Insert: RagDocumentInsert
         Update: RagDocumentUpdate
       }
+      document_chunks: {
+        Row: DocumentChunk
+        Insert: DocumentChunkInsert
+        Update: DocumentChunkUpdate
+      }
       fewshot_examples: {
         Row: FewshotExample
         Insert: FewshotExampleInsert
@@ -555,6 +560,10 @@ export interface RagDocument {
   page_count: number | null         // 페이지 수
   status: string                    // 상태 (processing, ready, error)
   error_message: string | null      // 에러 메시지
+  // pgvector 관련 필드
+  pgvector_indexed: boolean         // pgvector 인덱싱 여부
+  pgvector_indexed_at: string | null // pgvector 인덱싱 일시
+  chunk_count: number | null        // 청크 수
   created_at: string                // 생성 일시
   updated_at: string                // 수정 일시
 }
@@ -568,6 +577,45 @@ export type RagDocumentInsert = Omit<RagDocument, 'id' | 'created_at' | 'updated
 
 /** RAG 문서 수정용 타입 */
 export type RagDocumentUpdate = Partial<RagDocumentInsert>
+
+/**
+ * 문서 청크 (document_chunks)
+ * pgvector RAG용 문서 청크와 임베딩
+ */
+export interface DocumentChunk {
+  id: string                        // UUID, Primary Key
+  document_id: string               // 문서 ID (rag_documents.id 참조)
+  academy_id: string                // 학원 ID
+  content: string                   // 청크 내용
+  chunk_index: number               // 청크 인덱스
+  embedding: string | null          // 벡터 임베딩 (pgvector 문자열)
+  metadata: DocumentChunkMetadata | null // 메타데이터
+  token_count: number | null        // 토큰 수
+  created_at: string                // 생성 일시
+}
+
+/** 문서 청크 메타데이터 */
+export interface DocumentChunkMetadata {
+  page_number?: number
+  section?: string
+  problem_number?: string
+  tags?: string[]
+  source_filename?: string
+  subject?: string
+  grade?: string
+  unit?: string
+  chunk_index?: number
+  total_chunks?: number
+}
+
+/** 문서 청크 삽입용 타입 */
+export type DocumentChunkInsert = Omit<DocumentChunk, 'id' | 'created_at'> & {
+  id?: string
+  created_at?: string
+}
+
+/** 문서 청크 수정용 타입 */
+export type DocumentChunkUpdate = Partial<DocumentChunkInsert>
 
 /**
  * Few-shot 예시 (fewshot_examples)

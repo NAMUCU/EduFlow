@@ -10,6 +10,10 @@ import { UserRole, RoleRouteMap } from '@/types/auth';
 // 역할별 라우트 설정
 // 각 역할이 접근할 수 있는 경로와 기본 리다이렉트 경로를 정의합니다.
 export const ROLE_ROUTES: RoleRouteMap = {
+  super_admin: {
+    defaultPath: '/admin',
+    allowedPaths: ['/admin', '/admin/*', '/dashboard', '/dashboard/*'], // 모든 관리 경로 접근 가능
+  },
   admin: {
     defaultPath: '/admin',
     allowedPaths: ['/admin', '/admin/*'],
@@ -172,7 +176,8 @@ export function getRedirectPath(
  */
 export function getRoleDisplayName(role: UserRole): string {
   const displayNames: Record<UserRole, string> = {
-    admin: '관리자',
+    super_admin: '시스템 관리자',
+    admin: '학원 관리자',
     teacher: '선생님',
     student: '학생',
     parent: '학부모',
